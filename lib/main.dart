@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
-import 'services/api_client.dart';
+import 'package:provider/provider.dart';
+import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
+import 'services/session.dart';
+import 'widgets/loading_view.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => Session(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -12,58 +21,44 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'TaskNest',
-      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal)),
-      home: const HomePage(),
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
+        useMaterial3: true,
+      ),
+      home: const _StartupGate(),
     );
   }
 }
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+/// Decides whether to show the login screen or the home screen, based on
+/// whether a stored auth token still resolves to a valid user.
+class _StartupGate extends StatefulWidget {
+  const _StartupGate();
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<_StartupGate> createState() => _StartupGateState();
 }
 
-class _HomePageState extends State<HomePage> {
-  String _status = 'Checking backend connection...';
+class _StartupGateState extends State<_StartupGate> {
+  late Future<bool> _restoreFuture;
 
   @override
   void initState() {
     super.initState();
-    _checkBackend();
-  }
-
-  Future<void> _checkBackend() async {
-    try {
-      final response = await ApiClient.get('/health');
-      setState(() {
-        _status = response.statusCode == 200
-            ? 'Backend connected: ${response.body}'
-            : 'Backend responded with status ${response.statusCode}';
-      });
-    } catch (e) {
-      setState(() {
-        _status = 'Could not reach backend at ${ApiClient.baseUrl}: $e';
-      });
-    }
+    _restoreFuture = context.read<Session>().tryRestore();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('TaskNest')),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(_status, textAlign: TextAlign.center),
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _checkBackend,
-        tooltip: 'Retry',
-        child: const Icon(Icons.refresh),
-      ),
+    return FutureBuilder<bool>(
+      future: _restoreFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Scaffold(body: LoadingView());
+        }
+        final loggedIn = snapshot.data ?? false;
+        return loggedIn ? const HomeScreen() : const LoginScreen();
+      },
     );
   }
 }
