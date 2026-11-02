@@ -6,6 +6,7 @@ import '../models/task.dart';
 import '../services/project_service.dart';
 import '../services/session.dart';
 import '../services/task_service.dart';
+import '../widgets/app_card.dart';
 import '../widgets/loading_view.dart';
 import '../widgets/status_priority_chips.dart';
 import 'manage_members_screen.dart';
@@ -174,45 +175,60 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               Text(project.description!),
               const SizedBox(height: 16),
             ],
-            Row(
-              children: [
-                Text('Members', style: Theme.of(context).textTheme.titleMedium),
-                const Spacer(),
-                if (isManager)
-                  TextButton.icon(
-                    onPressed: () async {
-                      final changed = await Navigator.of(context).push<bool>(
-                        MaterialPageRoute(
-                          builder: (_) => ManageMembersScreen(project: project),
-                        ),
-                      );
-                      if (changed == true) _load();
-                    },
-                    icon: const Icon(Icons.manage_accounts_outlined),
-                    label: const Text('Manage'),
-                  ),
-              ],
+            SectionHeader(
+              title: 'Members',
+              icon: Icons.group_outlined,
+              trailing: isManager
+                  ? FilledButton.icon(
+                      onPressed: () async {
+                        final changed = await Navigator.of(context).push<bool>(
+                          MaterialPageRoute(
+                            builder: (_) => ManageMembersScreen(project: project),
+                          ),
+                        );
+                        if (changed == true) _load();
+                      },
+                      icon: const Icon(Icons.manage_accounts_outlined, size: 18),
+                      label: const Text('Manage'),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      ),
+                    )
+                  : null,
             ),
-            ...project.members.map(
-              (m) => Card(
-                margin: const EdgeInsets.symmetric(vertical: 4),
-                child: ListTile(
-                  dense: true,
-                  leading: CircleAvatar(child: Text(m.isLead ? 'L' : 'M')),
-                  title: Text(m.name),
-                  subtitle: Text(m.designation ?? ''),
-                  trailing: m.isLead
-                      ? const Chip(
-                          label: Text('Lead', style: TextStyle(fontSize: 11)),
-                          visualDensity: VisualDensity.compact,
-                        )
-                      : null,
+            if (project.members.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  isManager
+                      ? 'No members yet. Tap Manage above to add some.'
+                      : 'No members yet.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              )
+            else
+              ...project.members.map(
+                (m) => AppCard(
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                  child: ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    leading: CircleAvatar(
+                      backgroundColor: m.isLead
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.secondary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                      child: Text(m.isLead ? 'L' : 'M'),
+                    ),
+                    title: Text(m.name),
+                    subtitle: Text(m.designation ?? ''),
+                    trailing: m.isLead ? const RoleBadge(label: 'LEAD') : null,
+                  ),
                 ),
               ),
-            ),
             const SizedBox(height: 20),
-            Text('Tasks', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
+            SectionHeader(title: 'Tasks', icon: Icons.task_alt_outlined),
             ...StatusOptions.all.map((status) => _StatusColumn(
                   status: status,
                   tasks: _byStatus(status),

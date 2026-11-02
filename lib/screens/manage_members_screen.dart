@@ -3,7 +3,9 @@ import '../models/project.dart';
 import '../models/task_assignee.dart';
 import '../services/project_service.dart';
 import '../services/user_service.dart';
+import '../widgets/app_card.dart';
 import '../widgets/loading_view.dart';
+import 'create_user_screen.dart';
 
 class ManageMembersScreen extends StatefulWidget {
   final Project project;
@@ -49,13 +51,18 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
 
   Future<void> _addMember() async {
     final memberIds = _project.members.map((m) => m.id).toSet();
-    final candidates = _allUsers.where((u) => !memberIds.contains(u.id)).toList();
+    var candidates = _allUsers.where((u) => !memberIds.contains(u.id)).toList();
+
     if (candidates.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('All users are already members.')),
-      );
-      return;
+      final created = await _promptCreateUser();
+      if (created == null) return;
+      await _loadUsers();
+      memberIds.clear();
+      memberIds.addAll(_project.members.map((m) => m.id));
+      candidates = _allUsers.where((u) => !memberIds.contains(u.id)).toList();
+      if (candidates.isEmpty) return;
     }
+    if (!mounted) return;
 
     TaskAssignee? selectedUser = candidates.first;
     String role = 'member';
@@ -88,6 +95,22 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
                     ],
                     onChanged: (v) => setDialogState(() => role = v ?? 'member'),
                     decoration: const InputDecoration(labelText: 'Project role'),
+                  ),
+                  const SizedBox(height: 4),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: () async {
+                        Navigator.of(dialogContext).pop(false);
+                        final created = await _promptCreateUser();
+                        if (created != null) {
+                          await _loadUsers();
+                          if (mounted) _addMember();
+                        }
+                      },
+                      icon: const Icon(Icons.person_add_alt_outlined, size: 18),
+                      label: const Text("Can't find them? Create a new user"),
+                    ),
                   ),
                 ],
               ),
@@ -123,6 +146,14 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
         }
       }
     }
+  }
+
+  /// Pushes the Create User screen and returns the newly created user, or
+  /// null if the user backed out without creating one.
+  Future<TaskAssignee?> _promptCreateUser() {
+    return Navigator.of(context).push<TaskAssignee>(
+      MaterialPageRoute(builder: (_) => const CreateUserScreen()),
+    );
   }
 
   Future<void> _changeRole(int userId, String currentRole) async {
@@ -187,36 +218,65 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
             ? const LoadingView()
             : _error != null
                 ? ErrorView(message: _error!, onRetry: _loadUsers)
-                : ListView.builder(
-                    padding: const EdgeInsets.all(12),
-                    itemCount: _project.members.length,
-                    itemBuilder: (context, index) {
-                      final member = _project.members[index];
-                      return Card(
-                        child: ListTile(
-                          title: Text(member.name),
-                          subtitle: Text(member.designation ?? ''),
-                          leading: CircleAvatar(
-                            child: Text(member.isLead ? 'L' : 'M'),
-                          ),
-                          trailing: Row(
+                : _project.members.isEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              TextButton(
-                                onPressed: () =>
-                                    _changeRole(member.id, member.projectRole),
-                                child: Text(member.isLead ? 'Make Member' : 'Make Lead'),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline, color: Colors.red),
-                                onPressed: () => _removeMember(member.id),
+                              Icon(Icons.group_outlined,
+                                  size: 40,
+                                  color: Theme.of(context).colorScheme.outline),
+                              const SizedBox(height: 12),
+                              const Text('No members yet.'),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Tap the + button below to add one.',
+                                style: Theme.of(context).textTheme.bodySmall,
                               ),
                             ],
                           ),
                         ),
-                      );
-                    },
-                  ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(12),
+                        itemCount: _project.members.length,
+                        itemBuilder: (context, index) {
+                          final member = _project.members[index];
+                          final colorScheme = Theme.of(context).colorScheme;
+                          return AppCard(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            child: ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(member.name,
+                                  style: const TextStyle(fontWeight: FontWeight.w600)),
+                              subtitle: Text(member.designation ?? ''),
+                              leading: CircleAvatar(
+                                backgroundColor: member.isLead
+                                    ? colorScheme.primary
+                                    : colorScheme.secondary,
+                                foregroundColor: colorScheme.onPrimary,
+                                child: Text(member.isLead ? 'L' : 'M'),
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        _changeRole(member.id, member.projectRole),
+                                    child: Text(member.isLead ? 'Make Member' : 'Make Lead'),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.delete_outline, color: colorScheme.error),
+                                    onPressed: () => _removeMember(member.id),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
         floatingActionButton: FloatingActionButton(
           onPressed: _addMember,
           tooltip: 'Add member',
