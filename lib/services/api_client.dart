@@ -112,6 +112,12 @@ class ApiClient {
     }
 
     if (status >= 200 && status < 300) {
+      // Laravel API Resources wrap both single items and collections in a
+      // top-level "data" key. Auth endpoints (login/me) don't use Resources
+      // and have no "data" key, so this only unwraps Resource responses.
+      if (decoded is Map<String, dynamic> && decoded.containsKey('data')) {
+        return decoded['data'];
+      }
       return decoded;
     }
 
