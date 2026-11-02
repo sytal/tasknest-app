@@ -271,56 +271,122 @@ class _StatusColumn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('MMM d');
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          child: Row(
-            children: [
-              StatusChip(status: status),
-              const SizedBox(width: 8),
-              Text('(${tasks.length})'),
-            ],
-          ),
-        ),
-        if (tasks.isEmpty)
-          const Padding(
-            padding: EdgeInsets.only(left: 8, bottom: 12),
-            child: Text('No tasks', style: TextStyle(color: Colors.grey)),
-          )
-        else
-          ...tasks.map((task) {
-            final canOpen = isManager || task.assignee?.id == currentUserId;
-            return Card(
-              margin: const EdgeInsets.symmetric(vertical: 4),
-              child: ListTile(
-                enabled: canOpen,
-                title: Text(task.title),
-                subtitle: Row(
-                  children: [
-                    PriorityChip(priority: task.priority),
-                    const SizedBox(width: 8),
-                    if (task.assignee != null)
-                      Text('Assignee: ${task.assignee!.name}'),
-                    if (task.dueDate != null) ...[
-                      const SizedBox(width: 8),
-                      Text('Due ${dateFormat.format(DateTime.tryParse(task.dueDate!) ?? DateTime.now())}'),
-                    ],
-                  ],
+    final accent = StatusChip.colorFor(status);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+            child: Row(
+              children: [
+                StatusChip(status: status),
+                const SizedBox(width: 8),
+                Text(
+                  '${tasks.length}',
+                  style: TextStyle(
+                    color: accent,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-                trailing: onDelete != null
-                    ? IconButton(
-                        icon: const Icon(Icons.delete_outline),
-                        onPressed: () => onDelete!(task),
-                      )
-                    : (canOpen ? const Icon(Icons.chevron_right) : null),
-                onTap: canOpen ? () => onTap(task) : null,
+              ],
+            ),
+          ),
+          if (tasks.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(left: 6, top: 4, bottom: 10),
+              child: Text(
+                'No tasks',
+                style: TextStyle(color: Theme.of(context).colorScheme.outline),
               ),
-            );
-          }),
-        const SizedBox(height: 12),
-      ],
+            )
+          else
+            ...tasks.map((task) {
+              final canOpen = isManager || task.assignee?.id == currentUserId;
+              return Card(
+                margin: const EdgeInsets.symmetric(vertical: 4),
+                child: InkWell(
+                  onTap: canOpen ? () => onTap(task) : null,
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                task.title,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 6,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  PriorityChip(priority: task.priority),
+                                  if (task.assignee != null)
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        InitialsAvatar(name: task.assignee!.name),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          task.assignee!.name,
+                                          style: Theme.of(context).textTheme.bodySmall,
+                                        ),
+                                      ],
+                                    ),
+                                  if (task.dueDate != null)
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.event_outlined,
+                                          size: 14,
+                                          color: Theme.of(context).colorScheme.outline,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          dateFormat.format(
+                                            DateTime.tryParse(task.dueDate!) ?? DateTime.now(),
+                                          ),
+                                          style: Theme.of(context).textTheme.bodySmall,
+                                        ),
+                                      ],
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (onDelete != null)
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline),
+                            onPressed: () => onDelete!(task),
+                          )
+                        else if (canOpen)
+                          const Icon(Icons.chevron_right),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+        ],
+      ),
     );
   }
 }

@@ -1,33 +1,76 @@
 import 'package:flutter/material.dart';
 import '../models/task.dart';
 
+/// Shared pill-style badge used by [StatusChip] and [PriorityChip].
+class _Pill extends StatelessWidget {
+  final String label;
+  final Color color;
+  final IconData? icon;
+
+  const _Pill({required this.label, required this.color, this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 12, color: color),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class StatusChip extends StatelessWidget {
   final String status;
   const StatusChip({super.key, required this.status});
 
-  Color _color() {
+  static Color colorFor(String status) {
     switch (status) {
       case StatusOptions.inProgress:
-        return Colors.orange;
+        return const Color(0xFFE8A200); // amber
       case StatusOptions.done:
-        return Colors.green;
+        return const Color(0xFF1FAA59); // green
       default:
-        return Colors.blueGrey;
+        return const Color(0xFF6B7280); // neutral grey
+    }
+  }
+
+  static IconData iconFor(String status) {
+    switch (status) {
+      case StatusOptions.inProgress:
+        return Icons.autorenew;
+      case StatusOptions.done:
+        return Icons.check_circle;
+      default:
+        return Icons.radio_button_unchecked;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final color = _color();
-    return Chip(
-      label: Text(
-        StatusOptions.label(status),
-        style: const TextStyle(color: Colors.white, fontSize: 12),
-      ),
-      backgroundColor: color,
-      padding: EdgeInsets.zero,
-      visualDensity: VisualDensity.compact,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    return _Pill(
+      label: StatusOptions.label(status),
+      color: colorFor(status),
+      icon: iconFor(status),
     );
   }
 }
@@ -36,29 +79,69 @@ class PriorityChip extends StatelessWidget {
   final String priority;
   const PriorityChip({super.key, required this.priority});
 
-  Color _color() {
+  static Color colorFor(String priority) {
     switch (priority) {
       case PriorityOptions.high:
-        return Colors.red;
+        return const Color(0xFFE5484D); // red
       case PriorityOptions.low:
-        return Colors.grey;
+        return const Color(0xFF6B8AFD); // blue/grey
       default:
-        return Colors.amber.shade700;
+        return const Color(0xFFF59E0B); // orange
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final color = _color();
-    return Chip(
-      label: Text(
-        PriorityOptions.label(priority),
-        style: const TextStyle(color: Colors.white, fontSize: 12),
-      ),
+    return _Pill(
+      label: PriorityOptions.label(priority),
+      color: colorFor(priority),
+      icon: Icons.flag,
+    );
+  }
+}
+
+/// Simple colored-circle avatar with initials, used in place of a real
+/// profile photo for task assignees.
+class InitialsAvatar extends StatelessWidget {
+  final String name;
+  final double radius;
+
+  const InitialsAvatar({super.key, required this.name, this.radius = 12});
+
+  String get _initials {
+    final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
+    return (parts.first.substring(0, 1) + parts.last.substring(0, 1)).toUpperCase();
+  }
+
+  Color _colorFor(String seed) {
+    const palette = [
+      Color(0xFF6C4CF1),
+      Color(0xFF2563EB),
+      Color(0xFF059669),
+      Color(0xFFD97706),
+      Color(0xFFDB2777),
+      Color(0xFF0D9488),
+    ];
+    final idx = seed.codeUnits.fold<int>(0, (a, b) => a + b) % palette.length;
+    return palette[idx];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _colorFor(name);
+    return CircleAvatar(
+      radius: radius,
       backgroundColor: color,
-      padding: EdgeInsets.zero,
-      visualDensity: VisualDensity.compact,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      child: Text(
+        _initials,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: radius * 0.85,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
     );
   }
 }
