@@ -7,14 +7,16 @@ class TaskService {
     String? status,
     int? assignee,
   }) async {
+    // Spatie QueryBuilder (backend) expects filters nested under filter[...],
+    // e.g. ?filter[project_id]=4 — a bare ?project_id=4 is silently ignored.
     final params = <String, String>{};
-    if (projectId != null) params['project_id'] = '$projectId';
-    if (status != null) params['status'] = status;
-    if (assignee != null) params['assignee'] = '$assignee';
+    if (projectId != null) params['filter[project_id]'] = '$projectId';
+    if (status != null) params['filter[status]'] = status;
+    if (assignee != null) params['filter[assignee_id]'] = '$assignee';
 
     final query = params.isEmpty
         ? ''
-        : '?${params.entries.map((e) => '${e.key}=${e.value}').join('&')}';
+        : '?${params.entries.map((e) => '${Uri.encodeQueryComponent(e.key)}=${Uri.encodeQueryComponent(e.value)}').join('&')}';
 
     final data = await ApiClient.get('/tasks$query');
     final items = (data as List<dynamic>? ?? []);
