@@ -8,6 +8,7 @@ import '../services/session.dart';
 import '../services/api_client.dart';
 import '../widgets/initials_avatar.dart';
 import '../widgets/loading_view.dart';
+import '../widgets/glass_surface.dart';
 import 'project_detail_screen.dart';
 import 'project_edit_screen.dart';
 
@@ -104,6 +105,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     SliverToBoxAdapter(
                       child: _DashboardHeader(
                         firstName: firstName,
+                        role: user?.role,
+                        designation: user?.designation,
                         projects: projects,
                         overdueCount: data.overdueCount,
                       ),
@@ -126,16 +129,19 @@ class _HomeScreenState extends State<HomeScreen> {
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
                               final project = projects[index];
-                              return _ProjectStatCard(
-                                project: project,
-                                onTap: () async {
-                                  await Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => ProjectDetailScreen(projectId: project.id),
-                                    ),
-                                  );
-                                  _reload();
-                                },
+                              return FadeSlideIn(
+                                delay: Duration(milliseconds: 40 * index.clamp(0, 8)),
+                                child: _ProjectStatCard(
+                                  project: project,
+                                  onTap: () async {
+                                    await Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => ProjectDetailScreen(projectId: project.id),
+                                      ),
+                                    );
+                                    _reload();
+                                  },
+                                ),
                               );
                             },
                             childCount: projects.length,
@@ -170,14 +176,36 @@ class _HomeScreenState extends State<HomeScreen> {
 /// into a bare list.
 class _DashboardHeader extends StatelessWidget {
   final String? firstName;
+  final String? role;
+  final String? designation;
   final List<Project> projects;
   final int overdueCount;
 
   const _DashboardHeader({
     required this.firstName,
+    required this.role,
+    required this.designation,
     required this.projects,
     required this.overdueCount,
   });
+
+  /// Maps the raw role string to a human-friendly label, e.g.
+  /// "Director", "CEO", or "Member — Senior Developer" when a designation
+  /// is present for a plain member.
+  String _roleLabel() {
+    final r = role?.trim();
+    if (r == null || r.isEmpty) return '';
+    final roleTitle = switch (r.toLowerCase()) {
+      'ceo' => 'CEO',
+      'director' => 'Director',
+      _ => 'Member',
+    };
+    final d = designation?.trim();
+    if (roleTitle == 'Member' && d != null && d.isNotEmpty) {
+      return 'Member — $d';
+    }
+    return roleTitle;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -189,6 +217,7 @@ class _DashboardHeader extends StatelessWidget {
         ? const Color(0xFF0F1F3D)
         : const Color(0xFF1B2A4A);
     const headerFg = Color(0xFFFAF6EE);
+    final roleLabel = _roleLabel();
 
     return Container(
       width: double.infinity,
@@ -199,18 +228,50 @@ class _DashboardHeader extends StatelessWidget {
           bottomLeft: Radius.circular(24),
           bottomRight: Radius.circular(24),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0B152B).withValues(alpha: 0.35),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            firstName != null ? 'Welcome back, $firstName' : 'Welcome back',
-            style: const TextStyle(
-              color: headerFg,
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.3,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Text(
+                  firstName != null ? 'Welcome back, $firstName' : 'Welcome back',
+                  style: const TextStyle(
+                    color: headerFg,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+              ),
+              if (roleLabel.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: headerFg.withValues(alpha: 0.35)),
+                  ),
+                  child: Text(
+                    roleLabel,
+                    style: TextStyle(
+                      color: headerFg.withValues(alpha: 0.95),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 4),
           Text(
@@ -221,36 +282,44 @@ class _DashboardHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
-          Row(
-            children: [
-              Expanded(
-                child: _QuickStatCard(
-                  icon: Icons.folder_outlined,
-                  label: 'Projects',
-                  value: '${projects.length}',
-                  fg: headerFg,
+          GlassSurface(
+            tintColor: Colors.white,
+            tintOpacity: 0.08,
+            blurSigma: 14,
+            borderRadius: BorderRadius.circular(18),
+            padding: const EdgeInsets.all(10),
+            border: Border.all(color: headerFg.withValues(alpha: 0.14)),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _QuickStatCard(
+                    icon: Icons.folder_outlined,
+                    label: 'Projects',
+                    value: '${projects.length}',
+                    fg: headerFg,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _QuickStatCard(
-                  icon: Icons.task_alt_outlined,
-                  label: 'Tasks',
-                  value: '$totalTasks',
-                  fg: headerFg,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _QuickStatCard(
+                    icon: Icons.task_alt_outlined,
+                    label: 'Tasks',
+                    value: '$totalTasks',
+                    fg: headerFg,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _QuickStatCard(
-                  icon: Icons.warning_amber_rounded,
-                  label: 'Overdue',
-                  value: '$overdueCount',
-                  fg: overdueCount > 0 ? const Color(0xFFE38671) : headerFg,
-                  highlighted: overdueCount > 0,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _QuickStatCard(
+                    icon: Icons.warning_amber_rounded,
+                    label: 'Overdue',
+                    value: '$overdueCount',
+                    fg: overdueCount > 0 ? const Color(0xFFE38671) : headerFg,
+                    highlighted: overdueCount > 0,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -341,9 +410,22 @@ class _ProjectStatCard extends StatelessWidget {
     final progressPercent = (progress * 100).round();
     final memberNames = project.members.map((m) => m.name).toList();
 
-    return Card(
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.primary.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Card(
       child: InkWell(
         onTap: onTap,
+        splashColor: colorScheme.primary.withValues(alpha: 0.08),
+        highlightColor: colorScheme.primary.withValues(alpha: 0.04),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -421,6 +503,7 @@ class _ProjectStatCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }
