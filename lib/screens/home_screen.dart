@@ -8,8 +8,6 @@ import '../services/session.dart';
 import '../services/api_client.dart';
 import '../widgets/initials_avatar.dart';
 import '../widgets/loading_view.dart';
-import 'login_screen.dart';
-import 'profile_screen.dart';
 import 'project_detail_screen.dart';
 import 'project_edit_screen.dart';
 
@@ -73,30 +71,9 @@ class _HomeScreenState extends State<HomeScreen> {
         ? user!.name.trim().split(RegExp(r'\s+')).first
         : null;
 
+    // No AppBar here: this screen is hosted as the "Dashboard" tab inside
+    // MainShell, which supplies the shared AppBar and bottom navigation.
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('TaskNest'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person_outline),
-            tooltip: 'Profile',
-            onPressed: () async {
-              await Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ProfileScreen()),
-              );
-              if (!mounted) return;
-              // ignore: use_build_context_synchronously
-              final stillLoggedIn = context.read<Session>().isLoggedIn;
-              if (stillLoggedIn) return;
-              if (!mounted) return;
-              // ignore: use_build_context_synchronously
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-              );
-            },
-          ),
-        ],
-      ),
       body: RefreshIndicator(
         onRefresh: () async {
           _reload();

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/main_shell.dart';
 import 'services/session.dart';
 import 'theme/app_theme.dart';
 import 'widgets/loading_view.dart';
@@ -57,7 +57,7 @@ class _StartupGateState extends State<_StartupGate> {
           return const Scaffold(body: LoadingView());
         }
         final loggedIn = snapshot.data ?? false;
-        return loggedIn ? const HomeScreen() : const LoginScreen();
+        return loggedIn ? const MainShell() : const LoginScreen();
       },
     );
   }

@@ -13,8 +13,12 @@ class ProfileScreen extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final canManageUsers = user?.isDirectorOrCeo ?? false;
 
+    // No AppBar here: this screen is hosted as the "Profile" tab inside
+    // MainShell, which supplies the shared AppBar and bottom navigation.
+    // Logging out just clears the Session; MainShell watches Session and
+    // swaps the whole shell out for LoginScreen automatically, so this
+    // widget doesn't need to navigate itself.
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
       body: user == null
           ? const Center(child: Text('Not logged in'))
           : ListView(
@@ -82,7 +86,6 @@ class ProfileScreen extends StatelessWidget {
                 OutlinedButton.icon(
                   onPressed: () async {
                     await context.read<Session>().logout();
-                    if (context.mounted) Navigator.of(context).pop();
                   },
                   icon: const Icon(Icons.logout),
                   label: const Text('Log Out'),
