@@ -247,29 +247,30 @@ class _DashboardHeader extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _QuickStat(
+                child: _QuickStatCard(
                   icon: Icons.folder_outlined,
                   label: 'Projects',
                   value: '${projects.length}',
                   fg: headerFg,
                 ),
               ),
-              _StatDivider(color: headerFg),
+              const SizedBox(width: 10),
               Expanded(
-                child: _QuickStat(
+                child: _QuickStatCard(
                   icon: Icons.task_alt_outlined,
                   label: 'Tasks',
                   value: '$totalTasks',
                   fg: headerFg,
                 ),
               ),
-              _StatDivider(color: headerFg),
+              const SizedBox(width: 10),
               Expanded(
-                child: _QuickStat(
+                child: _QuickStatCard(
                   icon: Icons.warning_amber_rounded,
                   label: 'Overdue',
                   value: '$overdueCount',
                   fg: overdueCount > 0 ? const Color(0xFFE38671) : headerFg,
+                  highlighted: overdueCount > 0,
                 ),
               ),
             ],
@@ -280,63 +281,68 @@ class _DashboardHeader extends StatelessWidget {
   }
 }
 
-class _StatDivider extends StatelessWidget {
-  final Color color;
-  const _StatDivider({required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 1,
-      height: 32,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      color: color.withValues(alpha: 0.2),
-    );
-  }
-}
-
-class _QuickStat extends StatelessWidget {
+/// Individual stat tile rendered as its own card within the navy header,
+/// instead of a plain text column separated by a thin divider line.
+class _QuickStatCard extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
   final Color fg;
+  final bool highlighted;
 
-  const _QuickStat({
+  const _QuickStatCard({
     required this.icon,
     required this.label,
     required this.value,
     required this.fg,
+    this.highlighted = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 16, color: fg.withValues(alpha: 0.85)),
-            const SizedBox(width: 6),
-            Text(
-              value,
-              style: TextStyle(
-                color: fg,
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-              ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: highlighted ? 0.10 : 0.07),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: fg.withValues(alpha: highlighted ? 0.35 : 0.15),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: highlighted ? 0.18 : 0.12),
             ),
-          ],
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: TextStyle(
-            color: fg.withValues(alpha: 0.7),
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
+            child: Icon(icon, size: 18, color: fg.withValues(alpha: 0.9)),
           ),
-        ),
-      ],
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              color: fg,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: fg.withValues(alpha: 0.7),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
