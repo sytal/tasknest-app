@@ -80,21 +80,36 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
                 children: [
                   DropdownButtonFormField<TaskAssignee>(
                     initialValue: selectedUser,
+                    isExpanded: true,
                     items: candidates
-                        .map((u) => DropdownMenuItem(value: u, child: Text(u.name)))
+                        .map((u) => DropdownMenuItem(
+                              value: u,
+                              child: Text(u.name, overflow: TextOverflow.ellipsis),
+                            ))
                         .toList(),
                     onChanged: (v) => setDialogState(() => selectedUser = v),
-                    decoration: const InputDecoration(labelText: 'User'),
+                    decoration: const InputDecoration(
+                      labelText: 'User',
+                      helperText: 'Who to add to this project',
+                    ),
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     initialValue: role,
+                    isExpanded: true,
                     items: const [
-                      DropdownMenuItem(value: 'member', child: Text('Member')),
-                      DropdownMenuItem(value: 'lead', child: Text('Lead')),
+                      DropdownMenuItem(
+                          value: 'member',
+                          child: Text('Member', overflow: TextOverflow.ellipsis)),
+                      DropdownMenuItem(
+                          value: 'lead',
+                          child: Text('Lead', overflow: TextOverflow.ellipsis)),
                     ],
                     onChanged: (v) => setDialogState(() => role = v ?? 'member'),
-                    decoration: const InputDecoration(labelText: 'Project role'),
+                    decoration: const InputDecoration(
+                      labelText: 'Project role',
+                      helperText: 'Leads can manage this project\'s tasks',
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Align(

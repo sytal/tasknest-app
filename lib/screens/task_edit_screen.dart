@@ -137,7 +137,6 @@ class _TaskEditScreenState extends State<TaskEditScreen> {
                 enabled: fieldsEditable,
                 decoration: const InputDecoration(
                   labelText: 'Title',
-                  border: OutlineInputBorder(),
                 ),
                 validator: (v) =>
                     (v == null || v.trim().isEmpty) ? 'Title is required' : null,
@@ -149,19 +148,24 @@ class _TaskEditScreenState extends State<TaskEditScreen> {
                 maxLines: 4,
                 decoration: const InputDecoration(
                   labelText: 'Description',
-                  border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 initialValue: _priority,
+                isExpanded: true,
                 items: PriorityOptions.all
-                    .map((p) => DropdownMenuItem(value: p, child: Text(PriorityOptions.label(p))))
+                    .map((p) => DropdownMenuItem(
+                          value: p,
+                          child: Text(
+                            PriorityOptions.label(p),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ))
                     .toList(),
                 onChanged: fieldsEditable ? (v) => setState(() => _priority = v ?? _priority) : null,
                 decoration: const InputDecoration(
                   labelText: 'Priority',
-                  border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 16),
@@ -170,7 +174,6 @@ class _TaskEditScreenState extends State<TaskEditScreen> {
                 child: InputDecorator(
                   decoration: const InputDecoration(
                     labelText: 'Due date',
-                    border: OutlineInputBorder(),
                   ),
                   child: Text(
                     _dueDate != null ? dateFormat.format(_dueDate!) : 'No due date',
@@ -180,30 +183,40 @@ class _TaskEditScreenState extends State<TaskEditScreen> {
               const SizedBox(height: 16),
               DropdownButtonFormField<int>(
                 initialValue: _assigneeId,
+                isExpanded: true,
                 items: widget.project.members
-                    .map((m) => DropdownMenuItem(value: m.id, child: Text(m.name)))
+                    .map((m) => DropdownMenuItem(
+                          value: m.id,
+                          child: Text(m.name, overflow: TextOverflow.ellipsis),
+                        ))
                     .toList(),
                 onChanged: fieldsEditable ? (v) => setState(() => _assigneeId = v) : null,
                 decoration: const InputDecoration(
                   labelText: 'Assignee',
-                  border: OutlineInputBorder(),
+                  helperText: 'Who is responsible for this task',
                 ),
+                validator: (v) => fieldsEditable && v == null
+                    ? 'Please select an assignee'
+                    : null,
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 initialValue: _status,
+                isExpanded: true,
                 items: StatusOptions.all
-                    .map((s) => DropdownMenuItem(value: s, child: Text(StatusOptions.label(s))))
+                    .map((s) => DropdownMenuItem(
+                          value: s,
+                          child: Text(StatusOptions.label(s), overflow: TextOverflow.ellipsis),
+                        ))
                     .toList(),
                 onChanged: (v) => setState(() => _status = v ?? _status),
                 decoration: const InputDecoration(
                   labelText: 'Status',
-                  border: OutlineInputBorder(),
                 ),
               ),
               if (_error != null) ...[
                 const SizedBox(height: 12),
-                Text(_error!, style: const TextStyle(color: Colors.red)),
+                Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
               ],
               const SizedBox(height: 24),
               FilledButton(

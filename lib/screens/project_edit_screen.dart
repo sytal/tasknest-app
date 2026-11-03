@@ -77,7 +77,6 @@ class _ProjectEditScreenState extends State<ProjectEditScreen> {
                 controller: _nameController,
                 decoration: const InputDecoration(
                   labelText: 'Project name',
-                  border: OutlineInputBorder(),
                 ),
                 validator: (v) =>
                     (v == null || v.trim().isEmpty) ? 'Name is required' : null,
@@ -88,12 +87,11 @@ class _ProjectEditScreenState extends State<ProjectEditScreen> {
                 maxLines: 4,
                 decoration: const InputDecoration(
                   labelText: 'Description',
-                  border: OutlineInputBorder(),
                 ),
               ),
               if (_error != null) ...[
                 const SizedBox(height: 12),
-                Text(_error!, style: const TextStyle(color: Colors.red)),
+                Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
               ],
               const SizedBox(height: 24),
               FilledButton(

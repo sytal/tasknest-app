@@ -125,14 +125,21 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 initialValue: _role,
+                isExpanded: true,
                 items: const [
-                  DropdownMenuItem(value: 'member', child: Text('Member')),
-                  DropdownMenuItem(value: 'director', child: Text('Director')),
-                  DropdownMenuItem(value: 'ceo', child: Text('CEO')),
+                  DropdownMenuItem(
+                      value: 'member',
+                      child: Text('Member', overflow: TextOverflow.ellipsis)),
+                  DropdownMenuItem(
+                      value: 'director',
+                      child: Text('Director', overflow: TextOverflow.ellipsis)),
+                  DropdownMenuItem(
+                      value: 'ceo', child: Text('CEO', overflow: TextOverflow.ellipsis)),
                 ],
                 onChanged: (v) => setState(() => _role = v ?? _role),
                 decoration: const InputDecoration(
                   labelText: 'Role',
+                  helperText: 'Controls what this account can see and do',
                   prefixIcon: Icon(Icons.verified_user_outlined),
                 ),
               ),
