@@ -105,8 +105,9 @@ class PriorityChip extends StatelessWidget {
 class InitialsAvatar extends StatelessWidget {
   final String name;
   final double radius;
+  final String? avatarUrl;
 
-  const InitialsAvatar({super.key, required this.name, this.radius = 12});
+  const InitialsAvatar({super.key, required this.name, this.radius = 12, this.avatarUrl});
 
   String get _initials {
     final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
@@ -130,6 +131,12 @@ class InitialsAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (avatarUrl != null && avatarUrl!.isNotEmpty) {
+      return CircleAvatar(
+        radius: radius,
+        backgroundImage: NetworkImage(avatarUrl!),
+      );
+    }
     final color = _colorFor(name);
     return CircleAvatar(
       radius: radius,

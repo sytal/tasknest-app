@@ -26,6 +26,13 @@ class Session extends ChangeNotifier {
     }
   }
 
+  /// Replaces the current user (e.g. after an avatar upload/removal) and
+  /// notifies listeners so the UI refreshes everywhere the user is shown.
+  void updateUser(AppUser user) {
+    currentUser = user;
+    notifyListeners();
+  }
+
   Future<void> logout() async {
     await AuthService.logout();
     currentUser = null;

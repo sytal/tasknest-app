@@ -4,6 +4,7 @@ class AppUser {
   final String email;
   final String role; // director | ceo | member
   final String? designation;
+  final String? avatarUrl;
 
   AppUser({
     required this.id,
@@ -11,6 +12,7 @@ class AppUser {
     required this.email,
     required this.role,
     this.designation,
+    this.avatarUrl,
   });
 
   bool get isDirectorOrCeo => role == 'director' || role == 'ceo';
@@ -22,6 +24,18 @@ class AppUser {
       email: json['email']?.toString() ?? '',
       role: json['role']?.toString() ?? 'member',
       designation: json['designation']?.toString(),
+      avatarUrl: json['avatar_url']?.toString(),
+    );
+  }
+
+  AppUser copyWith({String? avatarUrl, bool clearAvatarUrl = false}) {
+    return AppUser(
+      id: id,
+      name: name,
+      email: email,
+      role: role,
+      designation: designation,
+      avatarUrl: clearAvatarUrl ? null : (avatarUrl ?? this.avatarUrl),
     );
   }
 
@@ -31,5 +45,6 @@ class AppUser {
         'email': email,
         'role': role,
         'designation': designation,
+        'avatar_url': avatarUrl,
       };
 }

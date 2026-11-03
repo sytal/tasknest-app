@@ -77,4 +77,18 @@ class TaskService {
   static Future<void> delete(int id) async {
     await ApiClient.delete('/tasks/$id');
   }
+
+  /// Bulk-assigns [taskIds] to [assigneeIds]. If a single assignee is given,
+  /// all tasks go to them; if multiple are given, the backend splits tasks
+  /// evenly between them.
+  static Future<void> bulkAssign({
+    required int projectId,
+    required List<int> taskIds,
+    required List<int> assigneeIds,
+  }) async {
+    await ApiClient.post('/projects/$projectId/tasks/bulk-assign', {
+      'task_ids': taskIds,
+      'assignee_ids': assigneeIds,
+    });
+  }
 }

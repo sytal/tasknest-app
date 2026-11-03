@@ -28,6 +28,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   bool _loading = true;
   String? _error;
 
+  bool _selectMode = false;
+  final Set<int> _selectedTaskIds = {};
+  bool _bulkAssigning = false;
+
   @override
   void initState() {
     super.initState();
@@ -121,6 +125,149 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   List<TaskItem> _byStatus(String status) =>
       _tasks.where((t) => t.status == status).toList();
 
+  void _toggleSelectMode() {
+    setState(() {
+      _selectMode = !_selectMode;
+      if (!_selectMode) _selectedTaskIds.clear();
+    });
+  }
+
+  void _toggleTaskSelected(TaskItem task) {
+    setState(() {
+      if (_selectedTaskIds.contains(task.id)) {
+        _selectedTaskIds.remove(task.id);
+      } else {
+        _selectedTaskIds.add(task.id);
+      }
+    });
+  }
+
+  Future<void> _openBulkAssignSheet() async {
+    final project = _project;
+    if (project == null || _selectedTaskIds.isEmpty) return;
+    final members = project.members;
+    final selected = <int>{};
+
+    final confirmed = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Assign ${_selectedTaskIds.length} task${_selectedTaskIds.length == 1 ? '' : 's'}',
+                      style: Theme.of(sheetContext).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Select 1 member to assign all tasks to them, or select '
+                      'multiple to split the tasks evenly between them.',
+                      style: Theme.of(sheetContext).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 12),
+                    if (members.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: Text('This project has no members to assign to.'),
+                      )
+                    else
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 360),
+                        child: ListView(
+                          shrinkWrap: true,
+                          children: members.map((m) {
+                            final checked = selected.contains(m.id);
+                            return CheckboxListTile(
+                              value: checked,
+                              onChanged: (value) {
+                                setSheetState(() {
+                                  if (value == true) {
+                                    selected.add(m.id);
+                                  } else {
+                                    selected.remove(m.id);
+                                  }
+                                });
+                              },
+                              secondary: InitialsAvatar(
+                                name: m.name,
+                                avatarUrl: m.avatarUrl,
+                              ),
+                              title: Text(m.name),
+                              subtitle: m.designation != null ? Text(m.designation!) : null,
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.of(sheetContext).pop(false),
+                            child: const Text('Cancel'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: selected.isEmpty
+                                ? null
+                                : () => Navigator.of(sheetContext).pop(true),
+                            child: const Text('Assign'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (confirmed == true && selected.isNotEmpty) {
+      await _bulkAssign(selected.toList());
+    }
+  }
+
+  Future<void> _bulkAssign(List<int> assigneeIds) async {
+    final project = _project;
+    if (project == null) return;
+    setState(() => _bulkAssigning = true);
+    try {
+      await TaskService.bulkAssign(
+        projectId: project.id,
+        taskIds: _selectedTaskIds.toList(),
+        assigneeIds: assigneeIds,
+      );
+      setState(() {
+        _selectMode = false;
+        _selectedTaskIds.clear();
+      });
+      await _load();
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Tasks assigned.')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Failed to assign tasks: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _bulkAssigning = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = context.watch<Session>().currentUser;
@@ -143,26 +290,41 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(project.name),
+        title: Text(_selectMode ? '${_selectedTaskIds.length} selected' : project.name),
+        leading: _selectMode
+            ? IconButton(
+                icon: const Icon(Icons.close),
+                tooltip: 'Cancel selection',
+                onPressed: _toggleSelectMode,
+              )
+            : null,
         actions: isManager
             ? [
-                IconButton(
-                  icon: const Icon(Icons.edit_outlined),
-                  tooltip: 'Edit project',
-                  onPressed: () async {
-                    final updated = await Navigator.of(context).push<bool>(
-                      MaterialPageRoute(
-                        builder: (_) => ProjectEditScreen(project: project),
-                      ),
-                    );
-                    if (updated == true) _load();
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline),
-                  tooltip: 'Delete project',
-                  onPressed: _deleteProject,
-                ),
+                if (!_selectMode)
+                  IconButton(
+                    icon: const Icon(Icons.playlist_add_check),
+                    tooltip: 'Select tasks to assign',
+                    onPressed: _toggleSelectMode,
+                  ),
+                if (!_selectMode) ...[
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined),
+                    tooltip: 'Edit project',
+                    onPressed: () async {
+                      final updated = await Navigator.of(context).push<bool>(
+                        MaterialPageRoute(
+                          builder: (_) => ProjectEditScreen(project: project),
+                        ),
+                      );
+                      if (updated == true) _load();
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline),
+                    tooltip: 'Delete project',
+                    onPressed: _deleteProject,
+                  ),
+                ],
               ]
             : null,
       ),
@@ -214,13 +376,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                   child: ListTile(
                     contentPadding: EdgeInsets.zero,
                     dense: true,
-                    leading: CircleAvatar(
-                      backgroundColor: m.isLead
-                          ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).colorScheme.secondary,
-                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                      child: Text(m.isLead ? 'L' : 'M'),
-                    ),
+                    leading: m.avatarUrl != null && m.avatarUrl!.isNotEmpty
+                        ? CircleAvatar(backgroundImage: NetworkImage(m.avatarUrl!))
+                        : CircleAvatar(
+                            backgroundColor: m.isLead
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).colorScheme.secondary,
+                            foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                            child: Text(m.isLead ? 'L' : 'M'),
+                          ),
                     title: Text(m.name),
                     subtitle: Text(m.designation ?? ''),
                     trailing: m.isLead ? const RoleBadge(label: 'LEAD') : null,
@@ -234,7 +398,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                   tasks: _byStatus(status),
                   isManager: isManager,
                   currentUserId: user?.id,
+                  selectMode: _selectMode,
+                  selectedTaskIds: _selectedTaskIds,
                   onTap: (task) async {
+                    if (_selectMode) {
+                      _toggleTaskSelected(task);
+                      return;
+                    }
                     final canOpen = isManager || task.assignee?.id == user?.id;
                     if (!canOpen) return;
                     final changed = await Navigator.of(context).push<bool>(
@@ -244,12 +414,20 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                     );
                     if (changed == true) _load();
                   },
-                  onDelete: isManager ? _deleteTask : null,
+                  onLongPress: isManager
+                      ? (task) {
+                          if (!_selectMode) {
+                            setState(() => _selectMode = true);
+                          }
+                          _toggleTaskSelected(task);
+                        }
+                      : null,
+                  onDelete: isManager && !_selectMode ? _deleteTask : null,
                 )),
           ],
         ),
       ),
-      floatingActionButton: isManager
+      floatingActionButton: !_selectMode && isManager
           ? FloatingActionButton(
               onPressed: () async {
                 final created = await Navigator.of(context).push<bool>(
@@ -263,6 +441,43 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               child: const Icon(Icons.add_task),
             )
           : null,
+      bottomNavigationBar: _selectMode && _selectedTaskIds.isNotEmpty
+          ? SafeArea(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 8,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      '${_selectedTaskIds.length} selected',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const Spacer(),
+                    FilledButton.icon(
+                      onPressed: _bulkAssigning ? null : _openBulkAssignSheet,
+                      icon: _bulkAssigning
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.person_add_alt_1_outlined, size: 18),
+                      label: const Text('Assign'),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : null,
     );
   }
 }
@@ -272,7 +487,10 @@ class _StatusColumn extends StatelessWidget {
   final List<TaskItem> tasks;
   final bool isManager;
   final int? currentUserId;
+  final bool selectMode;
+  final Set<int> selectedTaskIds;
   final void Function(TaskItem) onTap;
+  final void Function(TaskItem)? onLongPress;
   final void Function(TaskItem)? onDelete;
 
   const _StatusColumn({
@@ -280,7 +498,10 @@ class _StatusColumn extends StatelessWidget {
     required this.tasks,
     required this.isManager,
     required this.currentUserId,
+    this.selectMode = false,
+    this.selectedTaskIds = const {},
     required this.onTap,
+    this.onLongPress,
     this.onDelete,
   });
 
@@ -326,15 +547,28 @@ class _StatusColumn extends StatelessWidget {
           else
             ...tasks.map((task) {
               final canOpen = isManager || task.assignee?.id == currentUserId;
+              final isSelected = selectedTaskIds.contains(task.id);
               return Card(
                 margin: const EdgeInsets.symmetric(vertical: 4),
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.08)
+                    : null,
                 child: InkWell(
-                  onTap: canOpen ? () => onTap(task) : null,
+                  onTap: selectMode ? () => onTap(task) : (canOpen ? () => onTap(task) : null),
+                  onLongPress: onLongPress != null ? () => onLongPress!(task) : null,
                   child: Padding(
                     padding: const EdgeInsets.all(14),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        if (selectMode)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 4),
+                            child: Checkbox(
+                              value: isSelected,
+                              onChanged: (_) => onTap(task),
+                            ),
+                          ),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -357,7 +591,10 @@ class _StatusColumn extends StatelessWidget {
                                     Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        InitialsAvatar(name: task.assignee!.name),
+                                        InitialsAvatar(
+                                          name: task.assignee!.name,
+                                          avatarUrl: task.assignee!.avatarUrl,
+                                        ),
                                         const SizedBox(width: 6),
                                         Text(
                                           task.assignee!.name,

@@ -193,7 +193,10 @@ class _StatusColumn extends StatelessWidget {
                                       Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          InitialsAvatar(name: task.assignee!.name),
+                                          InitialsAvatar(
+                                            name: task.assignee!.name,
+                                            avatarUrl: task.assignee!.avatarUrl,
+                                          ),
                                           const SizedBox(width: 6),
                                           Text(
                                             task.assignee!.name,
