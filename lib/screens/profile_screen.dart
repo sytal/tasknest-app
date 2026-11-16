@@ -2,10 +2,13 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+
 import '../services/session.dart';
 import '../services/user_service.dart';
 import '../widgets/app_card.dart';
+import 'account_screens.dart';
 import 'create_user_screen.dart';
+import 'users_admin_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -66,8 +69,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return;
     }
 
-    final source = choice == 'camera' ? ImageSource.camera : ImageSource.gallery;
-    final picked = await ImagePicker().pickImage(source: source, imageQuality: 85);
+    final source = choice == 'camera'
+        ? ImageSource.camera
+        : ImageSource.gallery;
+    final picked = await ImagePicker().pickImage(
+      source: source,
+      imageQuality: 85,
+    );
     if (picked == null) return;
     await _uploadAvatar(picked);
   }
@@ -83,8 +91,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) context.read<Session>().updateUser(updated);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Failed to update photo: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to update photo: $e')));
       }
     } finally {
       if (mounted) setState(() => _updatingAvatar = false);
@@ -101,8 +110,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       session.updateUser(current.copyWith(clearAvatarUrl: true));
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Failed to remove photo: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to remove photo: $e')));
       }
     } finally {
       if (mounted) setState(() => _updatingAvatar = false);
@@ -154,30 +164,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Positioned(
                             right: -2,
                             bottom: -2,
-                            child: InkWell(
-                              onTap: _updatingAvatar ? null : _showAvatarOptions,
-                              borderRadius: BorderRadius.circular(16),
-                              child: Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.secondary,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: colorScheme.surface, width: 2),
-                                ),
-                                child: _updatingAvatar
-                                    ? SizedBox(
-                                        width: 14,
-                                        height: 14,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
+                            child: Tooltip(
+                              message: 'Change profile photo',
+                              child: InkWell(
+                                onTap: _updatingAvatar
+                                    ? null
+                                    : _showAvatarOptions,
+                                borderRadius: BorderRadius.circular(16),
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.secondary,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: colorScheme.surface,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: _updatingAvatar
+                                      ? SizedBox(
+                                          width: 14,
+                                          height: 14,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: colorScheme.onSecondary,
+                                          ),
+                                        )
+                                      : Icon(
+                                          Icons.camera_alt_outlined,
+                                          size: 14,
                                           color: colorScheme.onSecondary,
                                         ),
-                                      )
-                                    : Icon(
-                                        Icons.camera_alt_outlined,
-                                        size: 14,
-                                        color: colorScheme.onSecondary,
-                                      ),
+                                ),
                               ),
                             ),
                           ),
@@ -209,25 +227,67 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       _InfoRow(label: 'Role', value: user.role.toUpperCase()),
                       const Divider(height: 1),
-                      _InfoRow(label: 'Designation', value: user.designation ?? '-'),
+                      _InfoRow(
+                        label: 'Designation',
+                        value: user.designation ?? '-',
+                      ),
                     ],
                   ),
                 ),
+                const SizedBox(height: 12),
+                AppCard(
+                  padding: EdgeInsets.zero,
+                  child: Column(children: [
+                    ListTile(
+                      leading: const Icon(Icons.edit_outlined),
+                      title: const Text('Edit profile'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const EditProfileScreen())),
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.lock_outline),
+                      title: const Text('Change password'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ChangePasswordScreen())),
+                    ),
+                  ]),
+                ),
                 if (canManageUsers) ...[
                   const SizedBox(height: 20),
-                  SectionHeader(title: 'Administration', icon: Icons.admin_panel_settings_outlined),
+                  SectionHeader(
+                    title: 'Administration',
+                    icon: Icons.admin_panel_settings_outlined,
+                  ),
                   AppCard(
                     padding: EdgeInsets.zero,
                     child: ListTile(
-                      leading: Icon(Icons.person_add_alt_outlined, color: colorScheme.primary),
+                      leading: Icon(
+                        Icons.person_add_alt_outlined,
+                        color: colorScheme.primary,
+                      ),
                       title: const Text('Create User'),
-                      subtitle: const Text('Add a new director, CEO, or member account'),
+                      subtitle: const Text(
+                        'Add a new director, CEO, or member account',
+                      ),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () {
                         Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const CreateUserScreen()),
+                          MaterialPageRoute(
+                            builder: (_) => const CreateUserScreen(),
+                          ),
                         );
                       },
+                    ),
+                  ),
+                  AppCard(
+                    padding: EdgeInsets.zero,
+                    child: ListTile(
+                      leading: Icon(Icons.groups_outlined, color: colorScheme.primary),
+                      title: const Text('Manage users'),
+                      subtitle: const Text('Search, edit, deactivate, reset password'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const UsersAdminScreen())),
                     ),
                   ),
                 ],

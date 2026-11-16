@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
+
+import '../widgets/dashboard_sections.dart';
 import 'package:provider/provider.dart';
+
 import '../models/project.dart';
 import '../models/task.dart';
 import '../services/project_service.dart';
 import '../services/task_service.dart';
 import '../services/session.dart';
-import '../services/api_client.dart';
 import '../widgets/initials_avatar.dart';
 import '../widgets/loading_view.dart';
 import '../widgets/glass_surface.dart';
 import 'project_detail_screen.dart';
+import 'overdue_screen.dart';
 import 'project_edit_screen.dart';
+import '../utils/feedback.dart';
 
 class _HomeData {
   final List<Project> projects;
@@ -28,6 +32,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late Future<_HomeData> _future;
+  bool _archived = false;
+  int _sectionsKey = 0;
 
   @override
   void initState() {
@@ -36,7 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<_HomeData> _load() async {
-    final projects = await ProjectService.list();
+    final projects = await ProjectService.list(archived: _archived);
     var overdueCount = 0;
     try {
       final tasks = await TaskService.list();
@@ -59,6 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _reload() {
     setState(() {
+      _sectionsKey++;
       _future = _load();
     });
   }
@@ -88,7 +95,8 @@ class _HomeScreenState extends State<HomeScreen> {
             }
             if (snapshot.hasError) {
               return ErrorView(
-                message: 'Failed to load projects.\n${snapshot.error}\n\nBase URL: ${ApiClient.baseUrl}',
+                message:
+                    'Failed to load projects.\n${friendlyError(snapshot.error!)}',
                 onRetry: _reload,
               );
             }
@@ -97,9 +105,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
             return LayoutBuilder(
               builder: (context, constraints) {
-                final isWide = constraints.maxWidth >= 760;
-                final crossAxisCount = isWide ? 2 : 1;
-
                 return CustomScrollView(
                   slivers: [
                     SliverToBoxAdapter(
@@ -111,6 +116,29 @@ class _HomeScreenState extends State<HomeScreen> {
                         overdueCount: data.overdueCount,
                       ),
                     ),
+                    SliverToBoxAdapter(
+                      child: DashboardSections(
+                        key: ValueKey(_sectionsKey),
+                        showWorkload: canManage,
+                      ),
+                    ),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: FilterChip(
+                            avatar: const Icon(Icons.inventory_2_outlined, size: 16),
+                            label: const Text('Show archived'),
+                            selected: _archived,
+                            onSelected: (v) {
+                              _archived = v;
+                              _reload();
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
                     if (projects.isEmpty)
                       const SliverFillRemaining(
                         hasScrollBody: false,
@@ -118,34 +146,39 @@ class _HomeScreenState extends State<HomeScreen> {
                       )
                     else
                       SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
                         sliver: SliverGrid(
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: crossAxisCount,
-                            mainAxisSpacing: 14,
-                            crossAxisSpacing: 14,
-                            mainAxisExtent: 148,
-                          ),
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final project = projects[index];
-                              return FadeSlideIn(
-                                delay: Duration(milliseconds: 40 * index.clamp(0, 8)),
-                                child: _ProjectStatCard(
-                                  project: project,
-                                  onTap: () async {
-                                    await Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => ProjectDetailScreen(projectId: project.id),
+                          gridDelegate:
+                              const SliverGridDelegateWithMaxCrossAxisExtent(
+                                maxCrossAxisExtent: 520,
+                                mainAxisSpacing: 14,
+                                crossAxisSpacing: 14,
+                                mainAxisExtent: 156,
+                              ),
+                          delegate: SliverChildBuilderDelegate((
+                            context,
+                            index,
+                          ) {
+                            final project = projects[index];
+                            return FadeSlideIn(
+                              delay: Duration(
+                                milliseconds: 40 * index.clamp(0, 8),
+                              ),
+                              child: _ProjectStatCard(
+                                project: project,
+                                onTap: () async {
+                                  await Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => ProjectDetailScreen(
+                                        projectId: project.id,
                                       ),
-                                    );
-                                    _reload();
-                                  },
-                                ),
-                              );
-                            },
-                            childCount: projects.length,
-                          ),
+                                    ),
+                                  );
+                                  _reload();
+                                },
+                              ),
+                            );
+                          }, childCount: projects.length),
                         ),
                       ),
                   ],
@@ -156,15 +189,37 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       floatingActionButton: canManage
-          ? FloatingActionButton(
-              onPressed: () async {
-                final created = await Navigator.of(context).push<bool>(
-                  MaterialPageRoute(builder: (_) => const ProjectEditScreen()),
-                );
-                if (created == true) _reload();
-              },
-              tooltip: 'New project',
-              child: const Icon(Icons.add),
+          ? Padding(
+              // MainShell's frosted bottom nav overlaps this tab's body
+              // (extendBody), so lift the FAB above it on narrow layouts.
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.sizeOf(context).width >= 840
+                    ? 0
+                    : kBottomNavigationBarHeight +
+                          MediaQuery.paddingOf(context).bottom +
+                          8,
+              ),
+              child: FloatingActionButton(
+                onPressed: () async {
+                  final created = await Navigator.of(context).push<Object>(
+                    MaterialPageRoute(
+                      builder: (_) => const ProjectEditScreen(),
+                    ),
+                  );
+                  if (created == null) return;
+                  _reload();
+                  if (created is Project && context.mounted) {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ProjectDetailScreen(projectId: created.id),
+                      ),
+                    );
+                    _reload();
+                  }
+                },
+                tooltip: 'New project',
+                child: const Icon(Icons.add),
+              ),
             )
           : null,
     );
@@ -213,9 +268,7 @@ class _DashboardHeader extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final totalTasks = projects.fold<int>(0, (sum, p) => sum + p.tasksCount);
 
-    final headerBg = isDark
-        ? const Color(0xFF0F1F3D)
-        : const Color(0xFF1B2A4A);
+    final headerBg = isDark ? const Color(0xFF0F1F3D) : const Color(0xFF1B2A4A);
     const headerFg = Color(0xFFFAF6EE);
     final roleLabel = _roleLabel();
 
@@ -244,7 +297,9 @@ class _DashboardHeader extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  firstName != null ? 'Welcome back, $firstName' : 'Welcome back',
+                  firstName != null
+                      ? 'Welcome back, $firstName'
+                      : 'Welcome back',
                   style: const TextStyle(
                     color: headerFg,
                     fontSize: 22,
@@ -255,7 +310,10 @@ class _DashboardHeader extends StatelessWidget {
               ),
               if (roleLabel.isNotEmpty)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(20),
@@ -316,6 +374,9 @@ class _DashboardHeader extends StatelessWidget {
                     value: '$overdueCount',
                     fg: overdueCount > 0 ? const Color(0xFFE38671) : headerFg,
                     highlighted: overdueCount > 0,
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const OverdueScreen()),
+                    ),
                   ),
                 ),
               ],
@@ -335,8 +396,10 @@ class _QuickStatCard extends StatelessWidget {
   final String value;
   final Color fg;
   final bool highlighted;
+  final VoidCallback? onTap;
 
   const _QuickStatCard({
+    this.onTap,
     required this.icon,
     required this.label,
     required this.value,
@@ -346,8 +409,8 @@ class _QuickStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    final card = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: highlighted ? 0.10 : 0.07),
         borderRadius: BorderRadius.circular(14),
@@ -378,16 +441,29 @@ class _QuickStatCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 2),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: fg.withValues(alpha: 0.7),
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              maxLines: 1,
+              style: TextStyle(
+                color: fg.withValues(alpha: 0.7),
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
+      ),
+    );
+    if (onTap == null) return card;
+    return Semantics(
+      button: true,
+      label: '$label: $value. Tap to view.',
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: card,
       ),
     );
   }
@@ -422,88 +498,119 @@ class _ProjectStatCard extends StatelessWidget {
         ],
       ),
       child: Card(
-      child: InkWell(
-        onTap: onTap,
-        splashColor: colorScheme.primary.withValues(alpha: 0.08),
-        highlightColor: colorScheme.primary.withValues(alpha: 0.04),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(Icons.folder_outlined, size: 18, color: colorScheme.primary),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      project.name,
-                      style: theme.textTheme.titleMedium,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  Icon(Icons.chevron_right, color: colorScheme.outline),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: LinearProgressIndicator(
-                        value: project.tasksCount == 0 ? 0 : progress,
-                        minHeight: 8,
-                        backgroundColor: colorScheme.surfaceContainerHighest,
-                        valueColor: AlwaysStoppedAnimation(colorScheme.primary),
+        child: InkWell(
+          onTap: onTap,
+          splashColor: colorScheme.primary.withValues(alpha: 0.08),
+          highlightColor: colorScheme.primary.withValues(alpha: 0.04),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        Icons.folder_outlined,
+                        size: 18,
+                        color: colorScheme.primary,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    project.tasksCount == 0 ? '--' : '$progressPercent%',
-                    style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  if (memberNames.isNotEmpty) AvatarStack(names: memberNames, size: 22),
-                  if (memberNames.isNotEmpty) const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      memberNames.isEmpty
-                          ? 'No members yet'
-                          : '${memberNames.length} member${memberNames.length == 1 ? '' : 's'}',
-                      style: theme.textTheme.bodySmall,
-                      overflow: TextOverflow.ellipsis,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        project.name,
+                        style: theme.textTheme.titleMedium,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  Icon(Icons.check_circle_outline, size: 15, color: colorScheme.secondary),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${project.tasksDoneCount}/${project.tasksCount} done',
-                    style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                ],
-              ),
-            ],
+                    Icon(Icons.chevron_right, color: colorScheme.outline),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: LinearProgressIndicator(
+                          value: project.tasksCount == 0 ? 0 : progress,
+                          minHeight: 8,
+                          backgroundColor: colorScheme.surfaceContainerHighest,
+                          valueColor: AlwaysStoppedAnimation(
+                            colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      project.tasksCount == 0 ? '--' : '$progressPercent%',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    if (memberNames.isNotEmpty)
+                      AvatarStack(names: memberNames, size: 22),
+                    if (memberNames.isNotEmpty) const SizedBox(width: 8),
+                    if (project.isArchived)
+                      const Padding(
+                        padding: EdgeInsets.only(right: 6),
+                        child: Icon(Icons.inventory_2_outlined, size: 16),
+                      ),
+                    if (project.overdueCount > 0)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Text(
+                          '${project.overdueCount} overdue',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.error,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    Flexible(
+                      child: Text(
+                        memberNames.isEmpty
+                            ? 'No members yet'
+                            : '${memberNames.length} member${memberNames.length == 1 ? '' : 's'}',
+                        style: theme.textTheme.bodySmall,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const Spacer(),
+                    Icon(
+                      Icons.check_circle_outline,
+                      size: 15,
+                      color: colorScheme.secondary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${project.tasksDoneCount}/${project.tasksCount} done',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }
