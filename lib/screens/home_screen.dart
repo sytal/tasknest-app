@@ -1,6 +1,10 @@
+import '../core/theme/brand_colors.dart';
+
 import 'package:flutter/material.dart';
 
+import '../core/widgets/brand_logo.dart';
 import '../widgets/dashboard_sections.dart';
+
 import 'package:provider/provider.dart';
 
 import '../models/project.dart';
@@ -128,7 +132,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Align(
                           alignment: Alignment.centerLeft,
                           child: FilterChip(
-                            avatar: const Icon(Icons.inventory_2_outlined, size: 16),
+                            avatar: const Icon(
+                              Icons.inventory_2_outlined,
+                              size: 16,
+                            ),
                             label: const Text('Show archived'),
                             selected: _archived,
                             onSelected: (v) {
@@ -142,7 +149,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     if (projects.isEmpty)
                       const SliverFillRemaining(
                         hasScrollBody: false,
-                        child: Center(child: Text('No projects yet.')),
+                        child: EmptyState(
+                          message: canManage
+                              ? 'No projects yet. Create your first project to get started.'
+                              : 'No projects yet. You will see projects here once you are added to one.',
+                        ),
                       )
                     else
                       SliverPadding(
@@ -150,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         sliver: SliverGrid(
                           gridDelegate:
                               const SliverGridDelegateWithMaxCrossAxisExtent(
-                                maxCrossAxisExtent: 520,
+                                maxCrossAxisExtent: 360,
                                 mainAxisSpacing: 14,
                                 crossAxisSpacing: 14,
                                 mainAxisExtent: 156,
@@ -211,7 +222,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (created is Project && context.mounted) {
                     await Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => ProjectDetailScreen(projectId: created.id),
+                        builder: (_) =>
+                            ProjectDetailScreen(projectId: created.id),
                       ),
                     );
                     _reload();
@@ -244,23 +256,9 @@ class _DashboardHeader extends StatelessWidget {
     required this.overdueCount,
   });
 
-  /// Maps the raw role string to a human-friendly label, e.g.
-  /// "Director", "CEO", or "Member — Senior Developer" when a designation
-  /// is present for a plain member.
-  String _roleLabel() {
-    final r = role?.trim();
-    if (r == null || r.isEmpty) return '';
-    final roleTitle = switch (r.toLowerCase()) {
-      'ceo' => 'CEO',
-      'director' => 'Director',
-      _ => 'Member',
-    };
-    final d = designation?.trim();
-    if (roleTitle == 'Member' && d != null && d.isNotEmpty) {
-      return 'Member — $d';
-    }
-    return roleTitle;
-  }
+  /// Only the job title is shown; the account role is a permission level
+  /// that is visible solely in Administration.
+  String _roleLabel() => designation?.trim() ?? '';
 
   @override
   Widget build(BuildContext context) {
@@ -268,8 +266,8 @@ class _DashboardHeader extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final totalTasks = projects.fold<int>(0, (sum, p) => sum + p.tasksCount);
 
-    final headerBg = isDark ? const Color(0xFF0F1F3D) : const Color(0xFF1B2A4A);
-    const headerFg = Color(0xFFFAF6EE);
+    final headerBg = isDark ? AppColors.surfaceDark : AppColors.navy;
+    const headerFg = AppColors.cream;
     final roleLabel = _roleLabel();
 
     return Container(
@@ -283,7 +281,7 @@ class _DashboardHeader extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0B152B).withValues(alpha: 0.35),
+            color: AppColors.navyDark.withValues(alpha: 0.35),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),
@@ -372,7 +370,7 @@ class _DashboardHeader extends StatelessWidget {
                     icon: Icons.warning_amber_rounded,
                     label: 'Overdue',
                     value: '$overdueCount',
-                    fg: overdueCount > 0 ? const Color(0xFFE38671) : headerFg,
+                    fg: overdueCount > 0 ? AppColors.dangerDark : headerFg,
                     highlighted: overdueCount > 0,
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const OverdueScreen()),

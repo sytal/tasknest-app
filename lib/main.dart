@@ -7,7 +7,7 @@ import 'screens/login_screen.dart';
 import 'screens/main_shell.dart';
 import 'services/session.dart';
 import 'theme/app_theme.dart';
-import 'widgets/loading_view.dart';
+import 'core/widgets/brand_logo.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,6 +29,25 @@ class MyApp extends StatelessWidget {
       darkTheme: AppTheme.dark(),
       themeMode: ThemeMode.system,
       home: const _StartupGate(),
+    );
+  }
+}
+
+class _Splash extends StatelessWidget {
+  const _Splash();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.cream,
+      body: Center(
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: 1),
+          duration: const Duration(milliseconds: 600),
+          builder: (context, v, child) => Opacity(opacity: v, child: child),
+          child: const BrandLogo(width: 240),
+        ),
+      ),
     );
   }
 }
@@ -57,7 +76,7 @@ class _StartupGateState extends State<_StartupGate> {
       future: _restoreFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(body: LoadingView());
+          return const _Splash();
         }
         final loggedIn = snapshot.data ?? false;
         return loggedIn ? const MainShell() : const LoginScreen();

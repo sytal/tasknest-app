@@ -348,7 +348,7 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           PopupMenuButton<String>(
-                            tooltip: 'Change project role',
+                            tooltip: 'Change project role (Lead or Member)',
                             onSelected: (role) {
                               if (role != member.projectRole) {
                                 _changeRole(member.id, member.projectRole);

@@ -20,7 +20,10 @@ class _FormPage extends StatelessWidget {
       alignment: Alignment.topCenter,
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 560), child: child),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: child,
+        ),
       ),
     ),
   );
@@ -30,12 +33,22 @@ class _SubmitButton extends StatelessWidget {
   final bool busy;
   final String label;
   final VoidCallback onPressed;
-  const _SubmitButton({required this.busy, required this.label, required this.onPressed});
+  const _SubmitButton({
+    required this.busy,
+    required this.label,
+    required this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) => FilledButton(
     onPressed: busy ? null : onPressed,
-    child: busy ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Text(label),
+    child: busy
+        ? const SizedBox(
+            height: 20,
+            width: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          )
+        : Text(label),
   );
 }
 
@@ -48,8 +61,12 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _key = GlobalKey<FormState>();
-  late final _name = TextEditingController(text: context.read<Session>().currentUser?.name);
-  late final _designation = TextEditingController(text: context.read<Session>().currentUser?.designation);
+  late final _name = TextEditingController(
+    text: context.read<Session>().currentUser?.name,
+  );
+  late final _designation = TextEditingController(
+    text: context.read<Session>().currentUser?.designation,
+  );
   Map<String, String> _server = {};
   bool _busy = false;
 
@@ -66,7 +83,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     setState(() => _busy = true);
     try {
       final d = _designation.text.trim();
-      final user = await AccountService.updateProfile(_name.text.trim(), d.isEmpty ? null : d);
+      final user = await AccountService.updateProfile(
+        _name.text.trim(),
+        d.isEmpty ? null : d,
+      );
       if (!mounted) return;
       context.read<Session>().updateUser(user);
       showSnack(context, 'Profile updated');
@@ -87,29 +107,41 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     child: Form(
       key: _key,
       autovalidateMode: AutovalidateMode.onUserInteraction,
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        TextFormField(
-          controller: _name,
-          autofocus: true,
-          maxLength: Validators.nameMax,
-          textCapitalization: TextCapitalization.words,
-          textInputAction: TextInputAction.next,
-          autofillHints: const [AutofillHints.name],
-          decoration: InputDecoration(labelText: 'Name', errorText: _server['name']),
-          onChanged: (_) => _server.isEmpty ? null : setState(() => _server = {}),
-          validator: (v) => Validators.requiredMax(v, 'Name', Validators.nameMax),
-        ),
-        const SizedBox(height: 12),
-        TextFormField(
-          controller: _designation,
-          maxLength: Validators.nameMax,
-          textCapitalization: TextCapitalization.words,
-          decoration: InputDecoration(labelText: 'Designation (optional)', errorText: _server['designation']),
-          validator: (v) => Validators.maxLen(v, Validators.nameMax, 'Designation'),
-        ),
-        const SizedBox(height: 16),
-        _SubmitButton(busy: _busy, label: 'Save', onPressed: _save),
-      ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextFormField(
+            controller: _name,
+            autofocus: true,
+            maxLength: Validators.nameMax,
+            textCapitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.next,
+            autofillHints: const [AutofillHints.name],
+            decoration: InputDecoration(
+              labelText: 'Name',
+              errorText: _server['name'],
+            ),
+            onChanged: (_) =>
+                _server.isEmpty ? null : setState(() => _server = {}),
+            validator: (v) =>
+                Validators.requiredMax(v, 'Name', Validators.nameMax),
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _designation,
+            maxLength: Validators.nameMax,
+            textCapitalization: TextCapitalization.words,
+            decoration: InputDecoration(
+              labelText: 'Designation (optional)',
+              errorText: _server['designation'],
+            ),
+            validator: (v) =>
+                Validators.maxLen(v, Validators.nameMax, 'Designation'),
+          ),
+          const SizedBox(height: 16),
+          _SubmitButton(busy: _busy, label: 'Save', onPressed: _save),
+        ],
+      ),
     ),
   );
 }
@@ -142,7 +174,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     if (!_key.currentState!.validate()) return;
     setState(() => _busy = true);
     try {
-      await AccountService.changePassword(_current.text, _next.text, _confirm.text);
+      await AccountService.changePassword(
+        _current.text,
+        _next.text,
+        _confirm.text,
+      );
       if (!mounted) return;
       showSnack(context, 'Password updated. Other devices were signed out.');
       Navigator.of(context).pop();
@@ -162,37 +198,53 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     child: Form(
       key: _key,
       autovalidateMode: AutovalidateMode.onUserInteraction,
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        TextFormField(
-          controller: _current,
-          obscureText: true,
-          autofocus: true,
-          textInputAction: TextInputAction.next,
-          autofillHints: const [AutofillHints.password],
-          decoration: InputDecoration(labelText: 'Current password', errorText: _server['current_password']),
-          validator: (v) => Validators.required(v, 'Current password'),
-        ),
-        const SizedBox(height: 12),
-        TextFormField(
-          controller: _next,
-          obscureText: true,
-          textInputAction: TextInputAction.next,
-          autofillHints: const [AutofillHints.newPassword],
-          decoration: InputDecoration(labelText: 'New password', helperText: 'At least ${Validators.passwordMin} characters', errorText: _server['password']),
-          validator: Validators.newPassword,
-        ),
-        const SizedBox(height: 12),
-        TextFormField(
-          controller: _confirm,
-          obscureText: true,
-          textInputAction: TextInputAction.done,
-          decoration: const InputDecoration(labelText: 'Confirm new password'),
-          validator: (v) => v != _next.text ? 'Passwords do not match' : null,
-          onFieldSubmitted: (_) => _save(),
-        ),
-        const SizedBox(height: 16),
-        _SubmitButton(busy: _busy, label: 'Update password', onPressed: _save),
-      ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextFormField(
+            controller: _current,
+            obscureText: true,
+            autofocus: true,
+            textInputAction: TextInputAction.next,
+            autofillHints: const [AutofillHints.password],
+            decoration: InputDecoration(
+              labelText: 'Current password',
+              errorText: _server['current_password'],
+            ),
+            validator: (v) => Validators.required(v, 'Current password'),
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _next,
+            obscureText: true,
+            textInputAction: TextInputAction.next,
+            autofillHints: const [AutofillHints.newPassword],
+            decoration: InputDecoration(
+              labelText: 'New password',
+              helperText: 'At least ${Validators.passwordMin} characters',
+              errorText: _server['password'],
+            ),
+            validator: Validators.newPassword,
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _confirm,
+            obscureText: true,
+            textInputAction: TextInputAction.done,
+            decoration: const InputDecoration(
+              labelText: 'Confirm new password',
+            ),
+            validator: (v) => v != _next.text ? 'Passwords do not match' : null,
+            onFieldSubmitted: (_) => _save(),
+          ),
+          const SizedBox(height: 16),
+          _SubmitButton(
+            busy: _busy,
+            label: 'Update password',
+            onPressed: _save,
+          ),
+        ],
+      ),
     ),
   );
 }
@@ -239,28 +291,41 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     child: Form(
       key: _key,
       autovalidateMode: AutovalidateMode.onUserInteraction,
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        const Text('Enter your account email. If it is registered, we will send a reset link.'),
-        const SizedBox(height: 12),
-        TextFormField(
-          controller: _email,
-          autofocus: true,
-          keyboardType: TextInputType.emailAddress,
-          autofillHints: const [AutofillHints.email],
-          decoration: InputDecoration(labelText: 'Email', errorText: _error),
-          validator: Validators.email,
-          onFieldSubmitted: (_) => _send(),
-        ),
-        const SizedBox(height: 16),
-        if (_sent)
-          const Text('If that email is registered, a reset link has been sent.')
-        else
-          _SubmitButton(busy: _busy, label: 'Send reset link', onPressed: _send),
-        TextButton(
-          onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ResetPasswordScreen())),
-          child: const Text('I have a reset token'),
-        ),
-      ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Enter your account email. If it is registered, we will send a reset link.',
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _email,
+            autofocus: true,
+            keyboardType: TextInputType.emailAddress,
+            autofillHints: const [AutofillHints.email],
+            decoration: InputDecoration(labelText: 'Email', errorText: _error),
+            validator: Validators.email,
+            onFieldSubmitted: (_) => _send(),
+          ),
+          const SizedBox(height: 16),
+          if (_sent)
+            const Text(
+              'If that email is registered, a reset link has been sent.',
+            )
+          else
+            _SubmitButton(
+              busy: _busy,
+              label: 'Send reset link',
+              onPressed: _send,
+            ),
+          TextButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ResetPasswordScreen()),
+            ),
+            child: const Text('I have a reset token'),
+          ),
+        ],
+      ),
     ),
   );
 }
@@ -296,7 +361,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       _error = null;
     });
     try {
-      await AccountService.resetPassword(_email.text.trim(), _token.text.trim(), _password.text, _confirm.text);
+      await AccountService.resetPassword(
+        _email.text.trim(),
+        _token.text.trim(),
+        _password.text,
+        _confirm.text,
+      );
       if (!mounted) return;
       showSnack(context, 'Password reset. You can now sign in.');
       Navigator.of(context).popUntil((r) => r.isFirst);
@@ -313,18 +383,55 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     child: Form(
       key: _key,
       autovalidateMode: AutovalidateMode.onUserInteraction,
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        TextFormField(controller: _email, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'Email'), validator: Validators.email),
-        const SizedBox(height: 12),
-        TextFormField(controller: _token, decoration: const InputDecoration(labelText: 'Reset token'), validator: (v) => Validators.required(v, 'Token')),
-        const SizedBox(height: 12),
-        TextFormField(controller: _password, obscureText: true, autofillHints: const [AutofillHints.newPassword], decoration: const InputDecoration(labelText: 'New password'), validator: Validators.newPassword),
-        const SizedBox(height: 12),
-        TextFormField(controller: _confirm, obscureText: true, decoration: const InputDecoration(labelText: 'Confirm new password'), validator: (v) => v != _password.text ? 'Passwords do not match' : null),
-        if (_error != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error))),
-        const SizedBox(height: 16),
-        _SubmitButton(busy: _busy, label: 'Reset password', onPressed: _reset),
-      ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextFormField(
+            controller: _email,
+            keyboardType: TextInputType.emailAddress,
+            decoration: const InputDecoration(labelText: 'Email'),
+            validator: Validators.email,
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _token,
+            decoration: const InputDecoration(labelText: 'Reset token'),
+            validator: (v) => Validators.required(v, 'Token'),
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _password,
+            obscureText: true,
+            autofillHints: const [AutofillHints.newPassword],
+            decoration: const InputDecoration(labelText: 'New password'),
+            validator: Validators.newPassword,
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _confirm,
+            obscureText: true,
+            decoration: const InputDecoration(
+              labelText: 'Confirm new password',
+            ),
+            validator: (v) =>
+                v != _password.text ? 'Passwords do not match' : null,
+          ),
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(
+                _error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+          const SizedBox(height: 16),
+          _SubmitButton(
+            busy: _busy,
+            label: 'Reset password',
+            onPressed: _reset,
+          ),
+        ],
+      ),
     ),
   );
 }

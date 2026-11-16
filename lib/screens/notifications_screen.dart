@@ -20,7 +20,8 @@ class NotificationBell extends StatefulWidget {
   State<NotificationBell> createState() => NotificationBellState();
 }
 
-class NotificationBellState extends State<NotificationBell> with WidgetsBindingObserver {
+class NotificationBellState extends State<NotificationBell>
+    with WidgetsBindingObserver {
   int _count = 0;
   Timer? _timer;
 
@@ -68,7 +69,9 @@ class NotificationBellState extends State<NotificationBell> with WidgetsBindingO
     return IconButton(
       tooltip: _count > 0 ? 'Notifications, $_count unread' : 'Notifications',
       onPressed: () async {
-        await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+        await Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const NotificationsScreen()));
         refresh();
       },
       icon: Badge(
@@ -140,7 +143,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     if (n.taskId != null) {
       await openTaskDetail(context, taskStub(n.taskId!), null);
     } else if (n.projectId != null) {
-      await Navigator.of(context).push(MaterialPageRoute(builder: (_) => ProjectDetailScreen(projectId: n.projectId!)));
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ProjectDetailScreen(projectId: n.projectId!),
+        ),
+      );
     }
     if (mounted) _load(silent: true);
   }
@@ -174,23 +181,49 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           : RefreshIndicator(
               onRefresh: () => _load(silent: true),
               child: _items.isEmpty
-                  ? ListView(children: [
-                      const SizedBox(height: 120),
-                      Icon(Icons.notifications_none, size: 56, color: scheme.primary),
-                      const SizedBox(height: 12),
-                      const Text("You're all caught up", textAlign: TextAlign.center),
-                    ])
+                  ? ListView(
+                      children: [
+                        const SizedBox(height: 120),
+                        Icon(
+                          Icons.notifications_none,
+                          size: 56,
+                          color: scheme.primary,
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          "You're all caught up",
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    )
                   : ListView.builder(
                       itemCount: _items.length + (_more ? 1 : 0),
                       itemBuilder: (context, i) {
                         if (i == _items.length) {
-                          return TextButton(onPressed: _loadMore, child: const Text('Load more'));
+                          return TextButton(
+                            onPressed: _loadMore,
+                            child: const Text('Load more'),
+                          );
                         }
                         final n = _items[i];
                         return ListTile(
-                          tileColor: n.read ? null : scheme.primary.withValues(alpha: 0.10),
-                          leading: Icon(n.read ? Icons.notifications_none : Icons.notifications_active, color: n.read ? null : scheme.primary),
-                          title: Text(n.message, style: TextStyle(fontWeight: n.read ? FontWeight.w400 : FontWeight.w700)),
+                          tileColor: n.read
+                              ? null
+                              : scheme.primary.withValues(alpha: 0.10),
+                          leading: Icon(
+                            n.read
+                                ? Icons.notifications_none
+                                : Icons.notifications_active,
+                            color: n.read ? null : scheme.primary,
+                          ),
+                          title: Text(
+                            n.message,
+                            style: TextStyle(
+                              fontWeight: n.read
+                                  ? FontWeight.w400
+                                  : FontWeight.w700,
+                            ),
+                          ),
                           subtitle: Text(relativeTime(n.createdAt)),
                           onTap: () => _open(n),
                         );

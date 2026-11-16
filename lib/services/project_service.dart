@@ -3,7 +3,9 @@ import 'api_client.dart';
 
 class ProjectService {
   static Future<List<Project>> list({bool archived = false}) async {
-    final data = await ApiClient.get('/projects${archived ? '?archived=1' : ''}');
+    final data = await ApiClient.get(
+      '/projects${archived ? '?archived=1' : ''}',
+    );
     final items = (data as List<dynamic>? ?? []);
     return items
         .map((e) => Project.fromJson(e as Map<String, dynamic>))

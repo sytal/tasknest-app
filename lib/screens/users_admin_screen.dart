@@ -96,24 +96,47 @@ class _UsersAdminScreenState extends State<UsersAdminScreen> {
           title: const Text('Edit user'),
           content: Form(
             key: key,
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              TextFormField(controller: name, maxLength: Validators.nameMax, decoration: const InputDecoration(labelText: 'Name'), validator: (v) => Validators.requiredMax(v, 'Name', Validators.nameMax)),
-              TextFormField(controller: des, maxLength: Validators.nameMax, decoration: const InputDecoration(labelText: 'Designation')),
-              DropdownButtonFormField<String>(
-                initialValue: role,
-                items: const [
-                  DropdownMenuItem(value: 'member', child: Text('Member')),
-                  DropdownMenuItem(value: 'director', child: Text('Director')),
-                  DropdownMenuItem(value: 'ceo', child: Text('CEO')),
-                ],
-                onChanged: (v) => setD(() => role = v ?? role),
-                decoration: const InputDecoration(labelText: 'Role'),
-              ),
-            ]),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: name,
+                  maxLength: Validators.nameMax,
+                  decoration: const InputDecoration(labelText: 'Name'),
+                  validator: (v) =>
+                      Validators.requiredMax(v, 'Name', Validators.nameMax),
+                ),
+                TextFormField(
+                  controller: des,
+                  maxLength: Validators.nameMax,
+                  decoration: const InputDecoration(labelText: 'Designation'),
+                ),
+                DropdownButtonFormField<String>(
+                  initialValue: role,
+                  items: const [
+                    DropdownMenuItem(value: 'member', child: Text('Member')),
+                    DropdownMenuItem(
+                      value: 'director',
+                      child: Text('Director'),
+                    ),
+                    DropdownMenuItem(value: 'ceo', child: Text('CEO')),
+                  ],
+                  onChanged: (v) => setD(() => role = v ?? role),
+                  decoration: const InputDecoration(labelText: 'Role'),
+                ),
+              ],
+            ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(d, false), child: const Text('Cancel')),
-            FilledButton(onPressed: () => key.currentState!.validate() ? Navigator.pop(d, true) : null, child: const Text('Save')),
+            TextButton(
+              onPressed: () => Navigator.pop(d, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () =>
+                  key.currentState!.validate() ? Navigator.pop(d, true) : null,
+              child: const Text('Save'),
+            ),
           ],
         ),
       ),
@@ -123,7 +146,15 @@ class _UsersAdminScreenState extends State<UsersAdminScreen> {
     name.dispose();
     des.dispose();
     if (ok == true) {
-      await _run(() => AccountService.updateUser(u.id, name: n, designation: dd.isEmpty ? null : dd, role: role), 'User updated');
+      await _run(
+        () => AccountService.updateUser(
+          u.id,
+          name: n,
+          designation: dd.isEmpty ? null : dd,
+          role: role,
+        ),
+        'User updated',
+      );
     }
   }
 
@@ -133,11 +164,19 @@ class _UsersAdminScreenState extends State<UsersAdminScreen> {
         context: context,
         builder: (d) => AlertDialog(
           title: Text('Deactivate ${u.name}?'),
-          content: const Text('They will be signed out and unable to log in until reactivated.'),
+          content: const Text(
+            'They will be signed out and unable to log in until reactivated.',
+          ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(d, false), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.pop(d, false),
+              child: const Text('Cancel'),
+            ),
             FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: Theme.of(d).colorScheme.error, foregroundColor: Theme.of(d).colorScheme.onError),
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(d).colorScheme.error,
+                foregroundColor: Theme.of(d).colorScheme.onError,
+              ),
               onPressed: () => Navigator.pop(d, true),
               child: const Text('Deactivate'),
             ),
@@ -146,7 +185,10 @@ class _UsersAdminScreenState extends State<UsersAdminScreen> {
       );
       if (ok != true) return;
     }
-    await _run(() => AccountService.setActive(u.id, !u.isActive), u.isActive ? 'User deactivated' : 'User reactivated');
+    await _run(
+      () => AccountService.setActive(u.id, !u.isActive),
+      u.isActive ? 'User deactivated' : 'User reactivated',
+    );
   }
 
   Future<void> _resetPassword(AppUser u) async {
@@ -158,11 +200,18 @@ class _UsersAdminScreenState extends State<UsersAdminScreen> {
         barrierDismissible: false,
         builder: (d) => AlertDialog(
           title: const Text('Temporary password'),
-          content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Share this with ${u.name}. It is shown only once.'),
-            const SizedBox(height: 12),
-            SelectableText(temp, style: const TextStyle(fontFamily: 'monospace', fontSize: 18)),
-          ]),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Share this with ${u.name}. It is shown only once.'),
+              const SizedBox(height: 12),
+              SelectableText(
+                temp,
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 18),
+              ),
+            ],
+          ),
           actions: [
             TextButton.icon(
               onPressed: () async {
@@ -172,7 +221,10 @@ class _UsersAdminScreenState extends State<UsersAdminScreen> {
               icon: const Icon(Icons.copy, size: 18),
               label: const Text('Copy'),
             ),
-            FilledButton(onPressed: () => Navigator.pop(d), child: const Text('Done')),
+            FilledButton(
+              onPressed: () => Navigator.pop(d),
+              child: const Text('Done'),
+            ),
           ],
         ),
       );
@@ -190,70 +242,117 @@ class _UsersAdminScreenState extends State<UsersAdminScreen> {
       floatingActionButton: FloatingActionButton(
         tooltip: 'Create user',
         onPressed: () async {
-          await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CreateUserScreen()));
+          await Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const CreateUserScreen()));
           _load(silent: true);
         },
         child: const Icon(Icons.person_add),
       ),
-      body: Column(children: [
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: TextField(
-            decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Search name or email'),
-            onChanged: (v) {
-              _debounce?.cancel();
-              _debounce = Timer(const Duration(milliseconds: 300), () {
-                _search = v.trim();
-                _load(silent: true);
-              });
-            },
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: TextField(
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.search),
+                hintText: 'Search name or email',
+              ),
+              onChanged: (v) {
+                _debounce?.cancel();
+                _debounce = Timer(const Duration(milliseconds: 300), () {
+                  _search = v.trim();
+                  _load(silent: true);
+                });
+              },
+            ),
           ),
-        ),
-        Expanded(
-          child: _loading
-              ? const LoadingView()
-              : _error != null
-              ? ErrorView(message: _error!, onRetry: _load)
-              : RefreshIndicator(
-                  onRefresh: () => _load(silent: true),
-                  child: _users.isEmpty
-                      ? ListView(children: const [SizedBox(height: 80), Center(child: Text('No users found'))])
-                      : ListView.builder(
-                          padding: const EdgeInsets.only(bottom: 96),
-                          itemCount: _users.length + (_more ? 1 : 0),
-                          itemBuilder: (context, i) {
-                            if (i == _users.length) return TextButton(onPressed: _loadMore, child: const Text('Load more'));
-                            final u = _users[i];
-                            return ListTile(
-                              leading: InitialsAvatar(name: u.name, radius: 20, avatarUrl: u.avatarUrl),
-                              title: Text(u.name),
-                              subtitle: Text('${u.email}\n${u.role.toUpperCase()}${u.designation != null ? ' · ${u.designation}' : ''}'),
-                              isThreeLine: true,
-                              trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                                Chip(
-                                  label: Text(u.isActive ? 'Active' : 'Disabled'),
-                                  avatar: Icon(u.isActive ? Icons.check_circle_outline : Icons.block, size: 16, color: u.isActive ? null : scheme.error),
+          Expanded(
+            child: _loading
+                ? const LoadingView()
+                : _error != null
+                ? ErrorView(message: _error!, onRetry: _load)
+                : RefreshIndicator(
+                    onRefresh: () => _load(silent: true),
+                    child: _users.isEmpty
+                        ? ListView(
+                            children: const [
+                              SizedBox(height: 80),
+                              Center(child: Text('No users found')),
+                            ],
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.only(bottom: 96),
+                            itemCount: _users.length + (_more ? 1 : 0),
+                            itemBuilder: (context, i) {
+                              if (i == _users.length)
+                                return TextButton(
+                                  onPressed: _loadMore,
+                                  child: const Text('Load more'),
+                                );
+                              final u = _users[i];
+                              return ListTile(
+                                leading: InitialsAvatar(
+                                  name: u.name,
+                                  radius: 20,
+                                  avatarUrl: u.avatarUrl,
                                 ),
-                                PopupMenuButton<String>(
-                                  tooltip: 'User actions',
-                                  onSelected: (a) {
-                                    if (a == 'edit') _edit(u);
-                                    if (a == 'active') _toggleActive(u);
-                                    if (a == 'reset') _resetPassword(u);
-                                  },
-                                  itemBuilder: (_) => [
-                                    const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                                    if (u.id != me?.id) PopupMenuItem(value: 'active', child: Text(u.isActive ? 'Deactivate' : 'Reactivate')),
-                                    const PopupMenuItem(value: 'reset', child: Text('Reset password')),
+                                title: Text(u.name),
+                                subtitle: Text(
+                                  '${u.email}\n${u.role.toUpperCase()}${u.designation != null ? ' · ${u.designation}' : ''}',
+                                ),
+                                isThreeLine: true,
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Chip(
+                                      label: Text(
+                                        u.isActive ? 'Active' : 'Disabled',
+                                      ),
+                                      avatar: Icon(
+                                        u.isActive
+                                            ? Icons.check_circle_outline
+                                            : Icons.block,
+                                        size: 16,
+                                        color: u.isActive ? null : scheme.error,
+                                      ),
+                                    ),
+                                    PopupMenuButton<String>(
+                                      tooltip: 'User actions',
+                                      onSelected: (a) {
+                                        if (a == 'edit') _edit(u);
+                                        if (a == 'active') _toggleActive(u);
+                                        if (a == 'reset') _resetPassword(u);
+                                      },
+                                      itemBuilder: (_) => [
+                                        const PopupMenuItem(
+                                          value: 'edit',
+                                          child: Text('Edit'),
+                                        ),
+                                        if (u.id != me?.id)
+                                          PopupMenuItem(
+                                            value: 'active',
+                                            child: Text(
+                                              u.isActive
+                                                  ? 'Deactivate'
+                                                  : 'Reactivate',
+                                            ),
+                                          ),
+                                        const PopupMenuItem(
+                                          value: 'reset',
+                                          child: Text('Reset password'),
+                                        ),
+                                      ],
+                                    ),
                                   ],
                                 ),
-                              ]),
-                            );
-                          },
-                        ),
-                ),
-        ),
-      ]),
+                              );
+                            },
+                          ),
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }

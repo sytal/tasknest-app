@@ -23,7 +23,8 @@ class Comment {
     author: j['author'] is Map
         ? TaskAssignee.fromJson(j['author'] as Map<String, dynamic>)
         : null,
-    createdAt: DateTime.tryParse('${j['created_at']}')?.toLocal() ?? DateTime.now(),
+    createdAt:
+        DateTime.tryParse('${j['created_at']}')?.toLocal() ?? DateTime.now(),
   );
 
   Comment copyWith({int? id, bool? pending, bool? failed}) => Comment(
@@ -53,7 +54,8 @@ class ActivityItem {
     id: j['id'] as int,
     message: j['message']?.toString() ?? '',
     projectId: j['project_id'] as int?,
-    createdAt: DateTime.tryParse('${j['created_at']}')?.toLocal() ?? DateTime.now(),
+    createdAt:
+        DateTime.tryParse('${j['created_at']}')?.toLocal() ?? DateTime.now(),
   );
 }
 
@@ -83,7 +85,8 @@ class AppNotification {
     taskId: j['task_id'] as int?,
     projectId: j['project_id'] as int?,
     read: j['read'] == true,
-    createdAt: DateTime.tryParse('${j['created_at']}')?.toLocal() ?? DateTime.now(),
+    createdAt:
+        DateTime.tryParse('${j['created_at']}')?.toLocal() ?? DateTime.now(),
   );
 }
 

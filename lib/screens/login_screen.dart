@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
 
+import '../core/layout/responsive.dart';
+import '../core/theme/brand_colors.dart';
+import '../core/widgets/brand_logo.dart';
 import '../services/api_client.dart';
 import '../utils/validators.dart';
 import '../services/session.dart';
@@ -79,155 +82,193 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Scaffold(
-      body: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              colorScheme.primary.withValues(alpha: 0.12),
-              colorScheme.surface,
-            ],
-          ),
+    final form = DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colorScheme.primary.withValues(alpha: 0.12),
+            colorScheme.surface,
+          ],
         ),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 420),
-                child: Card(
-                  elevation: 3,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(28, 36, 28, 28),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Container(
-                            width: 64,
-                            height: 64,
-                            alignment: Alignment.center,
-                            margin: const EdgeInsets.symmetric(horizontal: 0),
-                            decoration: BoxDecoration(
-                              color: colorScheme.primary,
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                            child: Icon(
-                              Icons.rocket_launch_outlined,
-                              size: 32,
-                              color: colorScheme.onPrimary,
-                            ),
+      ),
+      child: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Card(
+                elevation: 3,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(28, 36, 28, 28),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Center(child: BrandLogo(width: 220)),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Sign in to manage your projects and tasks',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 32),
+                        TextFormField(
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: const InputDecoration(
+                            labelText: 'Email',
+                            prefixIcon: Icon(Icons.email_outlined),
                           ),
-                          const SizedBox(height: 18),
-                          Text(
-                            'TaskNest',
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.headlineMedium
-                                ?.copyWith(
-                                  color: colorScheme.primary,
-                                  letterSpacing: -0.5,
-                                ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Sign in to manage your projects and tasks',
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                          const SizedBox(height: 32),
-                          TextFormField(
-                            controller: _emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            decoration: const InputDecoration(
-                              labelText: 'Email',
-                              prefixIcon: Icon(Icons.email_outlined),
-                            ),
-                            autofillHints: const [AutofillHints.username],
-                            textInputAction: TextInputAction.next,
-                            autovalidateMode:
-                                AutovalidateMode.onUserInteraction,
-                            validator: Validators.email,
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: _passwordController,
-                            obscureText: _obscure,
-                            decoration: InputDecoration(
-                              labelText: 'Password',
-                              prefixIcon: const Icon(Icons.lock_outline),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _obscure
-                                      ? Icons.visibility_off
-                                      : Icons.visibility,
-                                ),
-                                onPressed: () =>
-                                    setState(() => _obscure = !_obscure),
+                          autofillHints: const [AutofillHints.username],
+                          textInputAction: TextInputAction.next,
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
+                          validator: Validators.email,
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _passwordController,
+                          obscureText: _obscure,
+                          decoration: InputDecoration(
+                            labelText: 'Password',
+                            prefixIcon: const Icon(Icons.lock_outline),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscure
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
                               ),
+                              onPressed: () =>
+                                  setState(() => _obscure = !_obscure),
                             ),
-                            autofillHints: const [AutofillHints.password],
-                            autovalidateMode:
-                                AutovalidateMode.onUserInteraction,
-                            validator: (v) => (v == null || v.isEmpty)
-                                ? 'Password is required'
-                                : null,
-                            onFieldSubmitted: (_) => _submit(),
                           ),
-                          const SizedBox(height: 8),
-                          if (kDebugMode)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8),
+                          autofillHints: const [AutofillHints.password],
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
+                          validator: (v) => (v == null || v.isEmpty)
+                              ? 'Password is required'
+                              : null,
+                          onFieldSubmitted: (_) => _submit(),
+                        ),
+                        const SizedBox(height: 8),
+                        if (kDebugMode)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              'Server: ${ApiClient.baseUrl}',
+                              style: Theme.of(context).textTheme.bodySmall,
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        // Fixed-height slot so the card doesn't jump when an
+                        // error appears.
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: SizedBox(
+                            height: 40,
+                            child: Center(
                               child: Text(
-                                'Server: ${ApiClient.baseUrl}',
-                                style: Theme.of(context).textTheme.bodySmall,
+                                _error ?? '',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(color: colorScheme.error),
                                 textAlign: TextAlign.center,
                               ),
                             ),
-                          // Fixed-height slot so the card doesn't jump when an
-                          // error appears.
-                          Padding(
-                            padding: const EdgeInsets.only(top: 12),
-                            child: SizedBox(
-                              height: 40,
-                              child: Center(
-                                child: Text(
-                                  _error ?? '',
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(color: colorScheme.error),
-                                  textAlign: TextAlign.center,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        FilledButton(
+                          onPressed: _loading || _wait > 0 ? null : _submit,
+                          child: _loading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(
+                                  _wait > 0
+                                      ? 'Try again in ${_wait}s'
+                                      : 'Log In',
                                 ),
-                              ),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const ForgotPasswordScreen(),
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          FilledButton(
-                            onPressed: _loading || _wait > 0 ? null : _submit,
-                            child: _loading
-                                ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : Text(_wait > 0 ? 'Try again in ${_wait}s' : 'Log In'),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
-                            ),
-                            child: const Text('Forgot password?'),
-                          ),
-                        ],
-                      ),
+                          child: const Text('Forgot password?'),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
+            ),
+          ),
+        ),
+      ),
+    );
+    if (!context.isWide) return Scaffold(body: form);
+    return Scaffold(
+      body: Row(
+        children: [
+          const Expanded(child: _BrandPanel()),
+          Expanded(child: form),
+        ],
+      ),
+    );
+  }
+}
+
+class _BrandPanel extends StatelessWidget {
+  const _BrandPanel();
+
+  @override
+  Widget build(BuildContext context) {
+    const bullets = [
+      (Icons.checklist_rtl, 'Organize tasks, checklists and labels'),
+      (Icons.view_kanban_outlined, 'Plan with list, board and calendar views'),
+      (Icons.emoji_events_outlined, 'Achieve more with your team'),
+    ];
+    return ColoredBox(
+      color: AppColors.navy,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(Space.xxl),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const BrandLogo(width: 280),
+                const SizedBox(height: Space.xl),
+                for (final b in bullets)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: Space.md),
+                    child: Row(
+                      children: [
+                        Icon(b.$1, color: AppColors.orangeDark),
+                        const SizedBox(width: Space.md),
+                        Expanded(
+                          child: Text(
+                            b.$2,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
             ),
           ),
         ),

@@ -35,11 +35,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      final t = await CollabService.tasksDue(_month, DateTime(_month.year, _month.month + 1, 0));
-      if (mounted) setState(() {
-        _tasks = t;
-        _error = null;
-      });
+      final t = await CollabService.tasksDue(
+        _month,
+        DateTime(_month.year, _month.month + 1, 0),
+      );
+      if (mounted)
+        setState(() {
+          _tasks = t;
+          _error = null;
+        });
     } catch (e) {
       if (mounted) setState(() => _error = friendlyError(e));
     } finally {
@@ -55,7 +59,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
     _load();
   }
 
-  List<TaskItem> _on(DateTime d) => _tasks.where((t) => t.due != null && DateUtils.isSameDay(t.due, d)).toList();
+  List<TaskItem> _on(DateTime d) => _tasks
+      .where((t) => t.due != null && DateUtils.isSameDay(t.due, d))
+      .toList();
 
   @override
   Widget build(BuildContext context) {
@@ -77,17 +83,37 @@ class _CalendarScreenState extends State<CalendarScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  IconButton(tooltip: 'Previous month', icon: const Icon(Icons.chevron_left), onPressed: () => _shift(-1)),
-                  Text(DateFormat('MMMM y').format(_month), style: Theme.of(context).textTheme.titleMedium),
-                  IconButton(tooltip: 'Next month', icon: const Icon(Icons.chevron_right), onPressed: () => _shift(1)),
+                  IconButton(
+                    tooltip: 'Previous month',
+                    icon: const Icon(Icons.chevron_left),
+                    onPressed: () => _shift(-1),
+                  ),
+                  Text(
+                    DateFormat('MMMM y').format(_month),
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  IconButton(
+                    tooltip: 'Next month',
+                    icon: const Icon(Icons.chevron_right),
+                    onPressed: () => _shift(1),
+                  ),
                 ],
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Row(children: [
-                  for (final d in const ['M', 'T', 'W', 'T', 'F', 'S', 'S'])
-                    Expanded(child: Center(child: Text(d, style: Theme.of(context).textTheme.labelSmall))),
-                ]),
+                child: Row(
+                  children: [
+                    for (final d in const ['M', 'T', 'W', 'T', 'F', 'S', 'S'])
+                      Expanded(
+                        child: Center(
+                          child: Text(
+                            d,
+                            style: Theme.of(context).textTheme.labelSmall,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
               if (_loading) const LinearProgressIndicator(),
               Padding(
@@ -99,38 +125,55 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   children: [
                     for (var i = 0; i < offset; i++) const SizedBox.shrink(),
                     for (var day = 1; day <= days; day++)
-                      Builder(builder: (context) {
-                        final date = DateTime(_month.year, _month.month, day);
-                        final ts = _on(date);
-                        final overdue = ts.any((t) => t.isOverdue);
-                        final sel = _selected != null && DateUtils.isSameDay(_selected, date);
-                        return Semantics(
-                          label: '${DateFormat('MMMM d').format(date)}, ${ts.length} tasks due',
-                          button: true,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(12),
-                            onTap: () => setState(() => _selected = date),
-                            child: Container(
-                              margin: const EdgeInsets.all(2),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                color: sel ? scheme.primary.withValues(alpha: 0.2) : null,
-                                border: DateUtils.isSameDay(date, today) ? Border.all(color: scheme.primary) : null,
+                      Builder(
+                        builder: (context) {
+                          final date = DateTime(_month.year, _month.month, day);
+                          final ts = _on(date);
+                          final overdue = ts.any((t) => t.isOverdue);
+                          final sel =
+                              _selected != null &&
+                              DateUtils.isSameDay(_selected, date);
+                          return Semantics(
+                            label:
+                                '${DateFormat('MMMM d').format(date)}, ${ts.length} tasks due',
+                            button: true,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () => setState(() => _selected = date),
+                              child: Container(
+                                margin: const EdgeInsets.all(2),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  color: sel
+                                      ? scheme.primary.withValues(alpha: 0.2)
+                                      : null,
+                                  border: DateUtils.isSameDay(date, today)
+                                      ? Border.all(color: scheme.primary)
+                                      : null,
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text('$day'),
+                                    if (ts.isNotEmpty)
+                                      Container(
+                                        width: 6,
+                                        height: 6,
+                                        margin: const EdgeInsets.only(top: 2),
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: overdue
+                                              ? scheme.error
+                                              : scheme.primary,
+                                        ),
+                                      ),
+                                  ],
+                                ),
                               ),
-                              child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                                Text('$day'),
-                                if (ts.isNotEmpty)
-                                  Container(
-                                    width: 6,
-                                    height: 6,
-                                    margin: const EdgeInsets.only(top: 2),
-                                    decoration: BoxDecoration(shape: BoxShape.circle, color: overdue ? scheme.error : scheme.primary),
-                                  ),
-                              ]),
                             ),
-                          ),
-                        );
-                      }),
+                          );
+                        },
+                      ),
                   ],
                 ),
               ),
@@ -140,19 +183,28 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     ? ErrorView(message: _error!, onRetry: _load)
                     : dayTasks.isEmpty
                     ? const Center(child: Text('No tasks due this day'))
-                    : ListView(children: [
-                        for (final t in dayTasks)
-                          ListTile(
-                            leading: Icon(t.isOverdue ? Icons.warning_amber : Icons.task_alt, color: t.isOverdue ? scheme.error : null),
-                            title: Text(t.title),
-                            subtitle: Text(t.projectName ?? ''),
-                            trailing: StatusChip(status: t.status),
-                            onTap: () async {
-                              await openTaskDetail(context, t, null);
-                              _load();
-                            },
-                          ),
-                      ]),
+                    : ListView(
+                        children: [
+                          for (final t in dayTasks)
+                            ListTile(
+                              leading: Icon(
+                                t.isOverdue
+                                    ? Icons.warning_amber
+                                    : Icons.task_alt,
+                                color: t.isOverdue ? scheme.error : null,
+                              ),
+                              title: Text(t.title),
+                              subtitle: Text(
+                                '${t.projectName ?? ''}${t.isOverdue ? ' · Overdue' : ''}',
+                              ),
+                              trailing: StatusChip(status: t.status),
+                              onTap: () async {
+                                await openTaskDetail(context, t, null);
+                                _load();
+                              },
+                            ),
+                        ],
+                      ),
               ),
             ],
           ),

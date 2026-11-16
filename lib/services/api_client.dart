@@ -181,11 +181,6 @@ class ApiClient {
           ? 'Too many attempts. Please wait a moment and try again.'
           : 'Too many attempts. Try again in $retry seconds.';
     }
-    throw ApiException(
-      status,
-      message,
-      fieldErrors: fields,
-      retryAfter: retry,
-    );
+    throw ApiException(status, message, fieldErrors: fields, retryAfter: retry);
   }
 }

@@ -89,7 +89,11 @@ class _OverdueScreenState extends State<OverdueScreen> {
                               members: const [],
                             ),
                           );
-                          final changed = await openTaskDetail(context, task, project);
+                          final changed = await openTaskDetail(
+                            context,
+                            task,
+                            project,
+                          );
                           if (changed == true) _load();
                         },
                       );

@@ -89,7 +89,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       await CollabService.setArchived(project.id, !project.isArchived);
       await _load(silent: true);
       if (mounted) {
-        showSnack(context, project.isArchived ? 'Project restored' : 'Project archived');
+        showSnack(
+          context,
+          project.isArchived ? 'Project restored' : 'Project archived',
+        );
       }
     } catch (e) {
       if (mounted) showSnack(context, friendlyError(e));
@@ -218,7 +221,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           (t) =>
               t.status == status &&
               (_assigneeFilter == null || t.assignee?.id == _assigneeFilter) &&
-              (_labelFilter == null || t.labels.any((l) => l.id == _labelFilter)) &&
+              (_labelFilter == null ||
+                  t.labels.any((l) => l.id == _labelFilter)) &&
               (q.isEmpty || t.title.toLowerCase().contains(q)),
         )
         .toList();
@@ -451,8 +455,14 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                   ),
                 if (!_selectMode) ...[
                   IconButton(
-                    icon: Icon(project.isArchived ? Icons.unarchive_outlined : Icons.archive_outlined),
-                    tooltip: project.isArchived ? 'Restore project' : 'Archive project',
+                    icon: Icon(
+                      project.isArchived
+                          ? Icons.unarchive_outlined
+                          : Icons.archive_outlined,
+                    ),
+                    tooltip: project.isArchived
+                        ? 'Restore project'
+                        : 'Archive project',
                     onPressed: () => _toggleArchive(project),
                   ),
                   IconButton(
@@ -646,7 +656,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                       FilterChip(
                         label: Text(l.name),
                         selected: _labelFilter == l.id,
-                        onSelected: (v) => setState(() => _labelFilter = v ? l.id : null),
+                        onSelected: (v) =>
+                            setState(() => _labelFilter = v ? l.id : null),
                       ),
                   ],
                 ),
@@ -654,8 +665,16 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             SegmentedButton<bool>(
               showSelectedIcon: false,
               segments: const [
-                ButtonSegment(value: false, icon: Icon(Icons.view_list_outlined), label: Text('List')),
-                ButtonSegment(value: true, icon: Icon(Icons.view_kanban_outlined), label: Text('Board')),
+                ButtonSegment(
+                  value: false,
+                  icon: Icon(Icons.view_list_outlined),
+                  label: Text('List'),
+                ),
+                ButtonSegment(
+                  value: true,
+                  icon: Icon(Icons.view_kanban_outlined),
+                  label: Text('Board'),
+                ),
               ],
               selected: {_board},
               onSelectionChanged: (v) => _setBoard(v.first),
@@ -665,16 +684,19 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               SizedBox(
                 height: 520,
                 child: BoardView(
-                  tasks: [
-                    for (final s in StatusOptions.all) ..._byStatus(s),
-                  ],
-                  canMove: !project.isArchived &&
-                      (isManager || _tasks.any((t) => t.assignee?.id == user?.id)),
+                  tasks: [for (final s in StatusOptions.all) ..._byStatus(s)],
+                  canMove:
+                      !project.isArchived &&
+                      (isManager ||
+                          _tasks.any((t) => t.assignee?.id == user?.id)),
                   onMove: (t, s) {
                     if (isManager || t.assignee?.id == user?.id) {
                       _moveTask(t, s);
                     } else {
-                      showSnack(context, 'Only the assignee can move this task');
+                      showSnack(
+                        context,
+                        'Only the assignee can move this task',
+                      );
                     }
                   },
                   onOpen: (t) async {
@@ -685,7 +707,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               ),
             ...(_board
                     ? <String>[]
-                    : (_statusFilter == null ? StatusOptions.all : [_statusFilter!]))
+                    : (_statusFilter == null
+                          ? StatusOptions.all
+                          : [_statusFilter!]))
                 .map(
                   (status) => TaskStatusColumn(
                     status: status,
@@ -712,7 +736,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                             return;
                           }
                           if (!canOpen) return;
-                          final changed = await openTaskDetail(context, task, project);
+                          final changed = await openTaskDetail(
+                            context,
+                            task,
+                            project,
+                          );
                           if (changed == true) {
                             await _load(silent: true);
                             if (context.mounted) {

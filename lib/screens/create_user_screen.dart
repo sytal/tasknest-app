@@ -164,6 +164,20 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                       onChanged: (_) => _fieldErrors.remove('password'),
                     ),
                     const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _designationController,
+                      decoration: const InputDecoration(
+                        labelText: 'Designation (optional)',
+                        prefixIcon: Icon(Icons.work_outline),
+                      ),
+                      maxLength: Validators.nameMax,
+                      textCapitalization: TextCapitalization.words,
+                      validator: (v) => Validators.maxLen(
+                        v,
+                        Validators.nameMax,
+                        'Designation',
+                      ),
+                    ),
                     DropdownButtonFormField<String>(
                       initialValue: _role,
                       isExpanded: true,
@@ -195,20 +209,6 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _designationController,
-                      decoration: const InputDecoration(
-                        labelText: 'Designation (optional)',
-                        prefixIcon: Icon(Icons.work_outline),
-                      ),
-                      maxLength: Validators.nameMax,
-                      textCapitalization: TextCapitalization.words,
-                      validator: (v) => Validators.maxLen(
-                        v,
-                        Validators.nameMax,
-                        'Designation',
-                      ),
-                    ),
                     if (_error != null) ...[
                       const SizedBox(height: 16),
                       Text(

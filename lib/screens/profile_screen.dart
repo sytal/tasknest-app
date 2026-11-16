@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../core/layout/responsive.dart';
+import '../services/api_client.dart';
 import '../services/session.dart';
+import '../utils/feedback.dart';
 import '../services/user_service.dart';
 import '../widgets/app_card.dart';
 import 'account_screens.dart';
@@ -84,6 +87,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _updatingAvatar = true);
     try {
       final bytes = await picked.readAsBytes();
+      final ext = picked.name.split('.').last.toLowerCase();
+      if (!['jpg', 'jpeg', 'png', 'webp'].contains(ext)) {
+        throw ApiException(422, 'Please choose a JPG or PNG image.');
+      }
+      if (bytes.length > 2 * 1024 * 1024) {
+        throw ApiException(422, 'Image must be smaller than 2 MB.');
+      }
       final updated = await UserService.uploadAvatar(
         bytes: bytes,
         filename: picked.name.isNotEmpty ? picked.name : 'avatar.jpg',
@@ -91,16 +101,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) context.read<Session>().updateUser(updated);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to update photo: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(_avatarError(e))));
       }
     } finally {
       if (mounted) setState(() => _updatingAvatar = false);
     }
   }
 
+  /// Turns upload failures (including Laravel validation text) into friendly copy.
+  String _avatarError(Object e) {
+    if (e is ApiException) {
+      final m = e.message.toLowerCase();
+      if (m.contains('kilobytes') ||
+          m.contains('greater than') ||
+          m.contains('too large')) {
+        return 'Image must be smaller than 2 MB.';
+      }
+      if (e.statusCode == 422) {
+        return m.contains('2 mb')
+            ? e.message
+            : 'Please choose a JPG or PNG image.';
+      }
+      return e.message;
+    }
+    return friendlyError(e);
+  }
+
   Future<void> _removeAvatar() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (d) => AlertDialog(
+        title: const Text('Remove profile photo?'),
+        content: const Text('Your initials will be shown instead.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(d, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(d).colorScheme.error,
+              foregroundColor: Theme.of(d).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.pop(d, true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
     final session = context.read<Session>();
     final current = session.currentUser;
     if (current == null) return;
@@ -110,9 +160,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       session.updateUser(current.copyWith(clearAvatarUrl: true));
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to remove photo: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(friendlyError(e))));
       }
     } finally {
       if (mounted) setState(() => _updatingAvatar = false);
@@ -134,172 +183,204 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       body: user == null
           ? const Center(child: Text('Not logged in'))
-          : ListView(
-              padding: const EdgeInsets.all(20),
-              children: [
-                Center(
-                  child: Column(
-                    children: [
-                      Stack(
+          : Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 720),
+                child: ListView(
+                  padding: EdgeInsets.fromLTRB(
+                    20,
+                    20,
+                    20,
+                    bottomNavClearance(context) + 20,
+                  ),
+                  children: [
+                    Center(
+                      child: Column(
                         children: [
-                          CircleAvatar(
-                            radius: 40,
-                            backgroundColor: colorScheme.primary,
-                            backgroundImage: hasAvatar
-                                ? NetworkImage(user.avatarUrl!)
-                                : null,
-                            child: hasAvatar
-                                ? null
-                                : Text(
-                                    user.name.isNotEmpty
-                                        ? user.name[0].toUpperCase()
-                                        : '?',
-                                    style: TextStyle(
-                                      fontSize: 30,
-                                      fontWeight: FontWeight.w700,
-                                      color: colorScheme.onPrimary,
-                                    ),
-                                  ),
-                          ),
-                          Positioned(
-                            right: -2,
-                            bottom: -2,
-                            child: Tooltip(
-                              message: 'Change profile photo',
-                              child: InkWell(
-                                onTap: _updatingAvatar
+                          Stack(
+                            children: [
+                              CircleAvatar(
+                                radius: 40,
+                                backgroundColor: colorScheme.primary,
+                                backgroundImage: hasAvatar
+                                    ? NetworkImage(user.avatarUrl!)
+                                    : null,
+                                child: hasAvatar
                                     ? null
-                                    : _showAvatarOptions,
-                                borderRadius: BorderRadius.circular(16),
-                                child: Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    color: colorScheme.secondary,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: colorScheme.surface,
-                                      width: 2,
+                                    : Text(
+                                        user.name.isNotEmpty
+                                            ? user.name[0].toUpperCase()
+                                            : '?',
+                                        style: TextStyle(
+                                          fontSize: 30,
+                                          fontWeight: FontWeight.w700,
+                                          color: colorScheme.onPrimary,
+                                        ),
+                                      ),
+                              ),
+                              Positioned(
+                                right: -2,
+                                bottom: -2,
+                                child: Tooltip(
+                                  message: 'Change profile photo',
+                                  child: InkWell(
+                                    onTap: _updatingAvatar
+                                        ? null
+                                        : _showAvatarOptions,
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: colorScheme.secondary,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: colorScheme.surface,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      child: _updatingAvatar
+                                          ? SizedBox(
+                                              width: 14,
+                                              height: 14,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: colorScheme.onSecondary,
+                                              ),
+                                            )
+                                          : Icon(
+                                              Icons.camera_alt_outlined,
+                                              size: 14,
+                                              color: colorScheme.onSecondary,
+                                            ),
                                     ),
                                   ),
-                                  child: _updatingAvatar
-                                      ? SizedBox(
-                                          width: 14,
-                                          height: 14,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: colorScheme.onSecondary,
-                                          ),
-                                        )
-                                      : Icon(
-                                          Icons.camera_alt_outlined,
-                                          size: 14,
-                                          color: colorScheme.onSecondary,
-                                        ),
                                 ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: _updatingAvatar
+                                ? null
+                                : _showAvatarOptions,
+                            child: Text(
+                              hasAvatar ? 'Change photo' : 'Add photo',
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            user.name,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.headlineSmall,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            user.email,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    AppCard(
+                      child: Column(
+                        children: [
+                          _InfoRow(
+                            label: 'Designation',
+                            value: user.designation ?? '-',
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    AppCard(
+                      padding: EdgeInsets.zero,
+                      child: Column(
+                        children: [
+                          ListTile(
+                            leading: const Icon(Icons.edit_outlined),
+                            title: const Text('Edit profile'),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const EditProfileScreen(),
+                              ),
+                            ),
+                          ),
+                          const Divider(height: 1),
+                          ListTile(
+                            leading: const Icon(Icons.lock_outline),
+                            title: const Text('Change password'),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const ChangePasswordScreen(),
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      TextButton(
-                        onPressed: _updatingAvatar ? null : _showAvatarOptions,
-                        child: Text(hasAvatar ? 'Change photo' : 'Add photo'),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        user.name,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        user.email,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 28),
-                AppCard(
-                  child: Column(
-                    children: [
-                      _InfoRow(label: 'Role', value: user.role.toUpperCase()),
-                      const Divider(height: 1),
-                      _InfoRow(
-                        label: 'Designation',
-                        value: user.designation ?? '-',
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                AppCard(
-                  padding: EdgeInsets.zero,
-                  child: Column(children: [
-                    ListTile(
-                      leading: const Icon(Icons.edit_outlined),
-                      title: const Text('Edit profile'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const EditProfileScreen())),
                     ),
-                    const Divider(height: 1),
-                    ListTile(
-                      leading: const Icon(Icons.lock_outline),
-                      title: const Text('Change password'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ChangePasswordScreen())),
-                    ),
-                  ]),
-                ),
-                if (canManageUsers) ...[
-                  const SizedBox(height: 20),
-                  SectionHeader(
-                    title: 'Administration',
-                    icon: Icons.admin_panel_settings_outlined,
-                  ),
-                  AppCard(
-                    padding: EdgeInsets.zero,
-                    child: ListTile(
-                      leading: Icon(
-                        Icons.person_add_alt_outlined,
-                        color: colorScheme.primary,
+                    if (canManageUsers) ...[
+                      const SizedBox(height: 20),
+                      SectionHeader(
+                        title: 'Administration',
+                        icon: Icons.admin_panel_settings_outlined,
                       ),
-                      title: const Text('Create User'),
-                      subtitle: const Text(
-                        'Add a new director, CEO, or member account',
-                      ),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const CreateUserScreen(),
+                      AppCard(
+                        padding: EdgeInsets.zero,
+                        child: ListTile(
+                          leading: Icon(
+                            Icons.person_add_alt_outlined,
+                            color: colorScheme.primary,
                           ),
-                        );
+                          title: const Text('Create User'),
+                          subtitle: const Text(
+                            'Add a new director, CEO, or member account',
+                          ),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const CreateUserScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      AppCard(
+                        padding: EdgeInsets.zero,
+                        child: ListTile(
+                          leading: Icon(
+                            Icons.groups_outlined,
+                            color: colorScheme.primary,
+                          ),
+                          title: const Text('Manage users'),
+                          subtitle: const Text(
+                            'Search, edit, deactivate, reset password',
+                          ),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const UsersAdminScreen(),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 32),
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        await context.read<Session>().logout();
                       },
+                      icon: const Icon(Icons.logout),
+                      label: const Text('Log Out'),
                     ),
-                  ),
-                  AppCard(
-                    padding: EdgeInsets.zero,
-                    child: ListTile(
-                      leading: Icon(Icons.groups_outlined, color: colorScheme.primary),
-                      title: const Text('Manage users'),
-                      subtitle: const Text('Search, edit, deactivate, reset password'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const UsersAdminScreen())),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 32),
-                OutlinedButton.icon(
-                  onPressed: () async {
-                    await context.read<Session>().logout();
-                  },
-                  icon: const Icon(Icons.logout),
-                  label: const Text('Log Out'),
+                  ],
                 ),
-              ],
+              ),
             ),
     );
   }
