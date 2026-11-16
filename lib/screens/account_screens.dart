@@ -82,10 +82,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (!_key.currentState!.validate()) return;
     setState(() => _busy = true);
     try {
+      final isCeo = context.read<Session>().currentUser?.role == 'ceo';
       final d = _designation.text.trim();
       final user = await AccountService.updateProfile(
         _name.text.trim(),
-        d.isEmpty ? null : d,
+        isCeo ? (d.isEmpty ? null : d) : null,
+        sendDesignation: isCeo,
       );
       if (!mounted) return;
       context.read<Session>().updateUser(user);
@@ -127,17 +129,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 Validators.requiredMax(v, 'Name', Validators.nameMax),
           ),
           const SizedBox(height: 12),
-          TextFormField(
-            controller: _designation,
-            maxLength: Validators.nameMax,
-            textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(
-              labelText: 'Designation (optional)',
-              errorText: _server['designation'],
+          if (context.read<Session>().currentUser?.role != 'ceo')
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(
+                'Designation: ${context.read<Session>().currentUser?.designation ?? '-'} (only the CEO can change designations)',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            )
+          else
+            TextFormField(
+              controller: _designation,
+              maxLength: Validators.nameMax,
+              textCapitalization: TextCapitalization.words,
+              decoration: InputDecoration(
+                labelText: 'Designation (optional)',
+                errorText: _server['designation'],
+              ),
+              validator: (v) =>
+                  Validators.maxLen(v, Validators.nameMax, 'Designation'),
             ),
-            validator: (v) =>
-                Validators.maxLen(v, Validators.nameMax, 'Designation'),
-          ),
           const SizedBox(height: 16),
           _SubmitButton(busy: _busy, label: 'Save', onPressed: _save),
         ],

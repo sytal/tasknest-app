@@ -90,6 +90,7 @@ class _UsersAdminScreenState extends State<UsersAdminScreen> {
     final name = TextEditingController(text: u.name);
     final des = TextEditingController(text: u.designation);
     var role = u.role;
+    final isCeo = context.read<Session>().currentUser?.role == 'ceo';
     final key = GlobalKey<FormState>();
     final ok = await showDialog<bool>(
       context: context,
@@ -110,8 +111,12 @@ class _UsersAdminScreenState extends State<UsersAdminScreen> {
                 ),
                 TextFormField(
                   controller: des,
+                  enabled: isCeo,
                   maxLength: Validators.nameMax,
-                  decoration: const InputDecoration(labelText: 'Designation'),
+                  decoration: InputDecoration(
+                    labelText: 'Designation',
+                    helperText: isCeo ? null : 'Only the CEO can change this',
+                  ),
                 ),
                 DropdownButtonFormField<String>(
                   initialValue: role,

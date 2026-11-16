@@ -201,7 +201,10 @@ class TaskStatusColumn extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   '${tasks.length}',
-                  style: TextStyle(color: accent, fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                    color: scheme.onSurface,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),
@@ -285,56 +288,48 @@ class _TaskFilterBarState extends State<TaskFilterBar> {
           ),
         ),
         const SizedBox(height: 8),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              for (final entry in <MapEntry<String?, String>>[
-                const MapEntry(null, 'All'),
-                ...StatusOptions.all.map(
-                  (s) => MapEntry<String?, String>(s, StatusOptions.label(s)),
-                ),
-              ])
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    label: Text(entry.value),
-                    selected: widget.status == entry.key,
-                    onSelected: (_) => widget.onStatus(entry.key),
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            for (final entry in <MapEntry<String?, String>>[
+              const MapEntry(null, 'All'),
+              ...StatusOptions.all.map(
+                (s) => MapEntry<String?, String>(s, StatusOptions.label(s)),
+              ),
+            ])
+              ChoiceChip(
+                label: Text(entry.value),
+                selected: widget.status == entry.key,
+                onSelected: (_) => widget.onStatus(entry.key),
+              ),
+            if (widget.onAssignee != null && widget.assignees.isNotEmpty)
+              PopupMenuButton<int?>(
+                tooltip: 'Filter by assignee',
+                onSelected: widget.onAssignee,
+                itemBuilder: (_) => [
+                  const PopupMenuItem<int?>(value: null, child: Text('Anyone')),
+                  ...widget.assignees.map(
+                    (a) =>
+                        PopupMenuItem<int?>(value: a.key, child: Text(a.value)),
+                  ),
+                ],
+                child: Chip(
+                  avatar: const Icon(Icons.person_outline, size: 16),
+                  label: Text(
+                    widget.assigneeId == null
+                        ? 'Assignee'
+                        : widget.assignees
+                              .firstWhere(
+                                (a) => a.key == widget.assigneeId,
+                                orElse: () => const MapEntry(0, 'Assignee'),
+                              )
+                              .value,
                   ),
                 ),
-              if (widget.onAssignee != null && widget.assignees.isNotEmpty)
-                PopupMenuButton<int?>(
-                  tooltip: 'Filter by assignee',
-                  onSelected: widget.onAssignee,
-                  itemBuilder: (_) => [
-                    const PopupMenuItem<int?>(
-                      value: null,
-                      child: Text('Anyone'),
-                    ),
-                    ...widget.assignees.map(
-                      (a) => PopupMenuItem<int?>(
-                        value: a.key,
-                        child: Text(a.value),
-                      ),
-                    ),
-                  ],
-                  child: Chip(
-                    avatar: const Icon(Icons.person_outline, size: 16),
-                    label: Text(
-                      widget.assigneeId == null
-                          ? 'Assignee'
-                          : widget.assignees
-                                .firstWhere(
-                                  (a) => a.key == widget.assigneeId,
-                                  orElse: () => const MapEntry(0, 'Assignee'),
-                                )
-                                .value,
-                    ),
-                  ),
-                ),
-            ],
-          ),
+              ),
+          ],
         ),
       ],
     );

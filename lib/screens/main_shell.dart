@@ -112,7 +112,13 @@ class _MainShellState extends State<MainShell> {
             const VerticalDivider(width: 1),
             Expanded(
               child: BrandBackground(
-                child: IndexedStack(index: _index, children: _tabs),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1400),
+                    child: IndexedStack(index: _index, children: _tabs),
+                  ),
+                ),
               ),
             ),
           ],
@@ -124,7 +130,13 @@ class _MainShellState extends State<MainShell> {
       extendBody: true,
       appBar: AppBar(title: Text(_titles[_index]), actions: _actions(context)),
       body: BrandBackground(
-        child: IndexedStack(index: _index, children: _tabs),
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1400),
+            child: IndexedStack(index: _index, children: _tabs),
+          ),
+        ),
       ),
       // Frosted-glass bottom nav bar: a blurred backdrop behind a
       // translucent navy tint, rather than a flat opaque fill, so content
@@ -134,13 +146,16 @@ class _MainShellState extends State<MainShell> {
           backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surface,
           elevation: 3,
           surfaceTintColor: Colors.transparent,
-          indicatorColor: Theme.of(context).colorScheme.secondary
-              .withValues(alpha: isDark ? 0.35 : 0.30),
+          indicatorColor: isDark
+              ? AppColors.orangeDark
+              : Theme.of(context).colorScheme.secondary.withValues(alpha: 0.30),
           iconTheme: WidgetStateProperty.resolveWith((st) {
             final sel = st.contains(WidgetState.selected);
             return IconThemeData(
               color: sel
-                  ? Theme.of(context).colorScheme.onSurface
+                  ? (isDark
+                        ? AppColors.navyDark
+                        : Theme.of(context).colorScheme.onSurface)
                   : Theme.of(context).colorScheme.onSurface
                         .withValues(alpha: 0.7),
             );

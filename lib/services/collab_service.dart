@@ -157,10 +157,14 @@ class CollabService {
 
 /// Profile, password and user administration.
 class AccountService {
-  static Future<AppUser> updateProfile(String name, String? designation) async {
+  static Future<AppUser> updateProfile(
+    String name,
+    String? designation, {
+    bool sendDesignation = true,
+  }) async {
     final r = await ApiClient.put('/me', {
       'name': name,
-      'designation': designation,
+      if (sendDesignation) 'designation': designation,
     }) as Map<String, dynamic>;
     return AppUser.fromJson(r['user'] as Map<String, dynamic>);
   }

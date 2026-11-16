@@ -376,6 +376,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ChoiceChip(
                                   avatar: Icon(o.$3, size: 18),
                                   label: Text(o.$2),
+                                  showCheckmark: false,
                                   selected:
                                       context.watch<ThemeController>().mode ==
                                       o.$1,

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../services/session.dart';
 
 import '../services/api_client.dart';
 import '../services/user_service.dart';
@@ -56,7 +59,9 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
         role: _role,
-        designation: _designationController.text.trim(),
+        designation: context.read<Session>().currentUser?.role == 'ceo'
+            ? _designationController.text.trim()
+            : '',
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -163,21 +168,23 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                           Validators.newPassword(v) ?? _fieldErrors['password'],
                       onChanged: (_) => _fieldErrors.remove('password'),
                     ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _designationController,
-                      decoration: const InputDecoration(
-                        labelText: 'Designation (optional)',
-                        prefixIcon: Icon(Icons.work_outline),
+                    if (context.read<Session>().currentUser?.role == 'ceo') ...[
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _designationController,
+                        decoration: const InputDecoration(
+                          labelText: 'Designation (optional)',
+                          prefixIcon: Icon(Icons.work_outline),
+                        ),
+                        maxLength: Validators.nameMax,
+                        textCapitalization: TextCapitalization.words,
+                        validator: (v) => Validators.maxLen(
+                          v,
+                          Validators.nameMax,
+                          'Designation',
+                        ),
                       ),
-                      maxLength: Validators.nameMax,
-                      textCapitalization: TextCapitalization.words,
-                      validator: (v) => Validators.maxLen(
-                        v,
-                        Validators.nameMax,
-                        'Designation',
-                      ),
-                    ),
+                    ],
                     DropdownButtonFormField<String>(
                       initialValue: _role,
                       isExpanded: true,

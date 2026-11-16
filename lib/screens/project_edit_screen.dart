@@ -120,7 +120,9 @@ class _ProjectEditScreenState extends State<ProjectEditScreen> {
                   children: [
                     TextFormField(
                       controller: _nameController,
-                      onChanged: (_) => _dirty = true,
+                      onChanged: (_) {
+                        if (!_dirty) setState(() => _dirty = true);
+                      },
                       autofocus: !_isEditing,
                       maxLength: Validators.nameMax,
                       textInputAction: TextInputAction.next,
@@ -140,7 +142,9 @@ class _ProjectEditScreenState extends State<ProjectEditScreen> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _descController,
-                      onChanged: (_) => _dirty = true,
+                      onChanged: (_) {
+                        if (!_dirty) setState(() => _dirty = true);
+                      },
                       maxLines: 4,
                       maxLength: Validators.projectDescriptionMax,
                       textCapitalization: TextCapitalization.sentences,

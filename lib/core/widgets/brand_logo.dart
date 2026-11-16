@@ -49,7 +49,9 @@ class BrandWordmark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final task = onDark ? Colors.white : AppColors.navy;
+    final task = onDark || Theme.of(context).brightness == Brightness.dark
+        ? Colors.white
+        : AppColors.navy;
     final style = Theme.of(context).textTheme.titleMedium
         ?.copyWith(fontWeight: FontWeight.w800);
     return Row(
