@@ -384,27 +384,13 @@ class _UsersAdminScreenState extends State<UsersAdminScreen> {
                                 ),
                                 title: Text(u.name),
                                 subtitle: Text(
-                                  '${u.email}\n${u.role.toUpperCase()}${u.designation != null ? ' · ${u.designation}' : ''}',
+                                  '${u.email}\n${u.role.toUpperCase()}${u.designation != null ? ' · ${u.designation}' : ''}${u.isActive ? '' : ' · DISABLED'}',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                                 isThreeLine: true,
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Chip(
-                                      label: Text(
-                                        u.isActive ? 'Active' : 'Disabled',
-                                      ),
-                                      avatar: Icon(
-                                        u.isActive
-                                            ? Icons.check_circle_outline
-                                            : Icons.block,
-                                        size: 16,
-                                        color: u.isActive ? null : scheme.error,
-                                      ),
-                                    ),
-                                    _menu(u, me?.id),
-                                  ],
-                                ),
+                                trailing: _menu(u, me?.id),
+                                onTap: () => _edit(u),
                               );
                             },
                           ),

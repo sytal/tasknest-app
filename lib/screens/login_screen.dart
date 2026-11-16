@@ -82,17 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final form = DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colorScheme.primary.withValues(alpha: 0.12),
-            colorScheme.surface,
-          ],
-        ),
-      ),
+    final form = BrandBackground(
       child: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -115,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 24),
                         TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
@@ -162,24 +152,23 @@ class _LoginScreenState extends State<LoginScreen> {
                               textAlign: TextAlign.center,
                             ),
                           ),
-                        // Fixed-height slot so the card doesn't jump when an
-                        // error appears.
-                        Padding(
-                          padding: const EdgeInsets.only(top: 12),
-                          child: SizedBox(
-                            height: 40,
-                            child: Center(
-                              child: Text(
-                                _error ?? '',
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(color: colorScheme.error),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ),
+                        AnimatedSize(
+                          duration: const Duration(milliseconds: 150),
+                          child: _error == null
+                              ? const SizedBox(height: 8)
+                              : Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                  child: Text(
+                                    _wait > 0
+                                        ? 'Too many attempts. Try again in $_wait seconds.'
+                                        : _error!,
+                                    style: TextStyle(color: colorScheme.error),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
                         ),
-                        const SizedBox(height: 8),
                         FilledButton(
                           onPressed: _loading || _wait > 0 ? null : _submit,
                           child: _loading

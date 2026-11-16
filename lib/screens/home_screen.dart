@@ -86,6 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // No AppBar here: this screen is hosted as the "Dashboard" tab inside
     // MainShell, which supplies the shared AppBar and bottom navigation.
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: RefreshIndicator(
         onRefresh: () async {
           _reload();
@@ -160,8 +161,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
                         sliver: SliverGrid(
                           gridDelegate:
-                              const SliverGridDelegateWithMaxCrossAxisExtent(
-                                maxCrossAxisExtent: 360,
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount:
+                                    ((constraints.maxWidth - 32 + 14) /
+                                            (300 + 14))
+                                        .floor()
+                                        .clamp(1, 6),
                                 mainAxisSpacing: 14,
                                 crossAxisSpacing: 14,
                                 mainAxisExtent: 156,

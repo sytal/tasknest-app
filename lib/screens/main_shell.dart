@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -66,7 +64,6 @@ class _MainShellState extends State<MainShell> {
     }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final navTint = isDark ? AppColors.navy900 : AppColors.navy700;
 
     final sc = context.sizeClass;
     if (sc != SizeClass.compact) {
@@ -114,7 +111,9 @@ class _MainShellState extends State<MainShell> {
             ),
             const VerticalDivider(width: 1),
             Expanded(
-              child: IndexedStack(index: _index, children: _tabs),
+              child: BrandBackground(
+                child: IndexedStack(index: _index, children: _tabs),
+              ),
             ),
           ],
         ),
@@ -124,60 +123,58 @@ class _MainShellState extends State<MainShell> {
     return Scaffold(
       extendBody: true,
       appBar: AppBar(title: Text(_titles[_index]), actions: _actions(context)),
-      body: IndexedStack(index: _index, children: _tabs),
+      body: BrandBackground(
+        child: IndexedStack(index: _index, children: _tabs),
+      ),
       // Frosted-glass bottom nav bar: a blurred backdrop behind a
       // translucent navy tint, rather than a flat opaque fill, so content
       // scrolling underneath softly shows through.
-      bottomNavigationBar: ClipRRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: NavigationBarTheme(
-            data: NavigationBarThemeData(
-              backgroundColor: navTint.withValues(alpha: 0.72),
-              elevation: 0,
-              surfaceTintColor: Colors.transparent,
-              indicatorColor: AppColors.orange.withValues(alpha: 0.35),
-              iconTheme: WidgetStateProperty.resolveWith((states) {
-                final selected = states.contains(WidgetState.selected);
-                return IconThemeData(
-                  color: AppColors.cream50.withValues(
-                    alpha: selected ? 1 : 0.65,
-                  ),
-                );
-              }),
-              labelTextStyle: WidgetStateProperty.resolveWith((states) {
-                final selected = states.contains(WidgetState.selected);
-                return TextStyle(
-                  fontSize: 12,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  color: AppColors.cream50.withValues(
-                    alpha: selected ? 1 : 0.65,
-                  ),
-                );
-              }),
+      bottomNavigationBar: NavigationBarTheme(
+        data: NavigationBarThemeData(
+          backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surface,
+          elevation: 3,
+          surfaceTintColor: Colors.transparent,
+          indicatorColor: Theme.of(context).colorScheme.secondary
+              .withValues(alpha: isDark ? 0.35 : 0.30),
+          iconTheme: WidgetStateProperty.resolveWith((st) {
+            final sel = st.contains(WidgetState.selected);
+            return IconThemeData(
+              color: sel
+                  ? Theme.of(context).colorScheme.onSurface
+                  : Theme.of(context).colorScheme.onSurface
+                        .withValues(alpha: 0.7),
+            );
+          }),
+          labelTextStyle: WidgetStateProperty.resolveWith((st) {
+            final sel = st.contains(WidgetState.selected);
+            return TextStyle(
+              fontSize: 12,
+              fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
+              color: Theme.of(context).colorScheme.onSurface
+                  .withValues(alpha: sel ? 1 : 0.75),
+            );
+          }),
+        ),
+        child: NavigationBar(
+          selectedIndex: _index,
+          onDestinationSelected: (i) => setState(() => _index = i),
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.space_dashboard_outlined),
+              selectedIcon: Icon(Icons.space_dashboard),
+              label: 'Dashboard',
             ),
-            child: NavigationBar(
-              selectedIndex: _index,
-              onDestinationSelected: (i) => setState(() => _index = i),
-              destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.space_dashboard_outlined),
-                  selectedIcon: Icon(Icons.space_dashboard),
-                  label: 'Dashboard',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.task_alt_outlined),
-                  selectedIcon: Icon(Icons.task_alt),
-                  label: 'My Tasks',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.person_outline),
-                  selectedIcon: Icon(Icons.person),
-                  label: 'Profile',
-                ),
-              ],
+            NavigationDestination(
+              icon: Icon(Icons.task_alt_outlined),
+              selectedIcon: Icon(Icons.task_alt),
+              label: 'My Tasks',
             ),
-          ),
+            NavigationDestination(
+              icon: Icon(Icons.person_outline),
+              selectedIcon: Icon(Icons.person),
+              label: 'Profile',
+            ),
+          ],
         ),
       ),
     );

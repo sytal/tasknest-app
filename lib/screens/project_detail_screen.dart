@@ -434,7 +434,56 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     final sortedMembers = [...project.members]
       ..sort((a, b) => (b.isLead ? 1 : 0) - (a.isLead ? 1 : 0));
 
+    final pct = project.tasksCount == 0
+        ? 0.0
+        : project.tasksDoneCount / project.tasksCount;
     final descBlock = <Widget>[
+      AppCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: LinearProgressIndicator(value: pct, minHeight: 10),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  '${(pct * 100).round()}%',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 16,
+              runSpacing: 8,
+              children: [
+                _Meta(
+                  Icons.task_alt_outlined,
+                  '${project.tasksDoneCount}/${project.tasksCount} done',
+                ),
+                _Meta(
+                  Icons.group_outlined,
+                  '${project.members.length} members',
+                ),
+                if (project.dueDate != null)
+                  _Meta(Icons.event_outlined, 'Due ${project.dueDate}'),
+                if (project.overdueCount > 0)
+                  _Meta(
+                    Icons.warning_amber,
+                    '${project.overdueCount} overdue',
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(height: 12),
       if (project.description != null && project.description!.isNotEmpty) ...[
         Text(project.description!),
         const SizedBox(height: 16),
@@ -835,4 +884,21 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           : null,
     );
   }
+}
+
+class _Meta extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final Color? color;
+  const _Meta(this.icon, this.text, {this.color});
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Icon(icon, size: 18, color: color),
+      const SizedBox(width: 6),
+      Text(text, style: TextStyle(color: color)),
+    ],
+  );
 }

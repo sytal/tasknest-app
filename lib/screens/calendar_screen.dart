@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../core/layout/responsive.dart';
+import '../core/widgets/brand_logo.dart';
 import '../models/task.dart';
 import '../services/collab_service.dart';
 import '../utils/feedback.dart';
@@ -248,7 +249,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       child: _error != null
                           ? ErrorView(message: _error!, onRetry: _load)
                           : dayTasks.isEmpty
-                          ? const Center(child: Text('No tasks due this day'))
+                          ? const EmptyState(
+                              message:
+                                  'No tasks due this day. Enjoy the free time!',
+                            )
                           : ListView(
                               children: [
                                 for (final t in dayTasks)

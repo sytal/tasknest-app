@@ -117,9 +117,21 @@ class _DashboardSectionsState extends State<DashboardSections> {
         ),
       ),
       if (due.isEmpty)
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 8),
-          child: Text('Nothing due in the next 7 days.'),
+        AppCard(
+          child: Row(
+            children: [
+              Icon(
+                Icons.check_circle_outline,
+                color: Theme.of(context).colorScheme.tertiary,
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  "You're all caught up. Nothing due in the next 7 days.",
+                ),
+              ),
+            ],
+          ),
         )
       else
         for (final t in due)
@@ -148,10 +160,7 @@ class _DashboardSectionsState extends State<DashboardSections> {
     final actBlock = <Widget>[
       const SectionHeader(title: 'Recently updated', icon: Icons.history),
       if (activity.isEmpty)
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 8),
-          child: Text('No recent activity.'),
-        )
+        const AppCard(child: Text('No recent activity yet.'))
       else
         for (final a in activity)
           ListTile(

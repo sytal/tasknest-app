@@ -117,3 +117,50 @@ class EmptyState extends StatelessWidget {
     );
   }
 }
+
+/// Soft brand backdrop: a gentle gradient with faint orange/leaf shapes so
+/// large surfaces feel warm instead of flat.
+class BrandBackground extends StatelessWidget {
+  final Widget child;
+  const BrandBackground({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: dark
+              ? const [AppColors.navyDark, AppColors.surfaceDark]
+              : const [AppColors.cream, AppColors.cream200],
+        ),
+      ),
+      child: CustomPaint(painter: _ShapesPainter(dark), child: child),
+    );
+  }
+}
+
+class _ShapesPainter extends CustomPainter {
+  final bool dark;
+  _ShapesPainter(this.dark);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final a = dark ? 0.07 : 0.10;
+    canvas.drawCircle(
+      Offset(size.width * 0.95, size.height * 0.08),
+      size.shortestSide * 0.35,
+      Paint()..color = AppColors.orange.withValues(alpha: a),
+    );
+    canvas.drawCircle(
+      Offset(size.width * 0.02, size.height * 0.92),
+      size.shortestSide * 0.42,
+      Paint()..color = AppColors.leaf.withValues(alpha: a * 0.8),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_ShapesPainter old) => old.dark != dark;
+}

@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../core/layout/responsive.dart';
+import '../core/theme/brand_colors.dart';
 import '../services/api_client.dart';
 import '../services/session.dart';
 import '../services/theme_controller.dart';
@@ -182,6 +183,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // swaps the whole shell out for LoginScreen automatically, so this
     // widget doesn't need to navigate itself.
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: user == null
           ? const Center(child: Text('Not logged in'))
           : Align(
@@ -196,14 +198,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     bottomNavClearance(context) + 20,
                   ),
                   children: [
-                    Center(
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 24,
+                        horizontal: 16,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [AppColors.navy, AppColors.navy600],
+                        ),
+                      ),
                       child: Column(
                         children: [
                           Stack(
                             children: [
                               CircleAvatar(
                                 radius: 40,
-                                backgroundColor: colorScheme.primary,
+                                backgroundColor: AppColors.orange,
                                 backgroundImage: hasAvatar
                                     ? NetworkImage(user.avatarUrl!)
                                     : null,
@@ -216,7 +230,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         style: TextStyle(
                                           fontSize: 30,
                                           fontWeight: FontWeight.w700,
-                                          color: colorScheme.onPrimary,
+                                          color: AppColors.navyDeep,
                                         ),
                                       ),
                               ),
@@ -265,6 +279,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             onPressed: _updatingAvatar
                                 ? null
                                 : _showAvatarOptions,
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppColors.amber,
+                            ),
                             child: Text(
                               hasAvatar ? 'Change photo' : 'Add photo',
                             ),
@@ -273,18 +290,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Text(
                             user.name,
                             textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.headlineSmall,
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(color: Colors.white),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             user.email,
                             textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodyMedium,
+                            style: const TextStyle(color: Colors.white70),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 20),
                     AppCard(
                       child: Column(
                         children: [
@@ -334,28 +352,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             style: TextStyle(fontWeight: FontWeight.w600),
                           ),
                           const SizedBox(height: 8),
-                          SegmentedButton<ThemeMode>(
-                            showSelectedIcon: false,
-                            segments: const [
-                              ButtonSegment(
-                                value: ThemeMode.system,
-                                icon: Icon(Icons.brightness_auto_outlined),
-                                label: Text('System'),
-                              ),
-                              ButtonSegment(
-                                value: ThemeMode.light,
-                                icon: Icon(Icons.light_mode_outlined),
-                                label: Text('Light'),
-                              ),
-                              ButtonSegment(
-                                value: ThemeMode.dark,
-                                icon: Icon(Icons.dark_mode_outlined),
-                                label: Text('Dark'),
-                              ),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              for (final o in const [
+                                (
+                                  ThemeMode.system,
+                                  'System',
+                                  Icons.brightness_auto_outlined,
+                                ),
+                                (
+                                  ThemeMode.light,
+                                  'Light',
+                                  Icons.light_mode_outlined,
+                                ),
+                                (
+                                  ThemeMode.dark,
+                                  'Dark',
+                                  Icons.dark_mode_outlined,
+                                ),
+                              ])
+                                ChoiceChip(
+                                  avatar: Icon(o.$3, size: 18),
+                                  label: Text(o.$2),
+                                  selected:
+                                      context.watch<ThemeController>().mode ==
+                                      o.$1,
+                                  onSelected: (_) =>
+                                      context.read<ThemeController>().set(o.$1),
+                                ),
                             ],
-                            selected: {context.watch<ThemeController>().mode},
-                            onSelectionChanged: (v) =>
-                                context.read<ThemeController>().set(v.first),
                           ),
                         ],
                       ),
