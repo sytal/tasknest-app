@@ -147,7 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     if (projects.isEmpty)
-                      const SliverFillRemaining(
+                      SliverFillRemaining(
                         hasScrollBody: false,
                         child: EmptyState(
                           message: canManage
