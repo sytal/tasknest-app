@@ -144,7 +144,17 @@ class AppTheme {
       ),
       chipTheme: ChipThemeData(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        labelStyle: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: colorScheme.onSurface,
+        ),
+        side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.7)),
+        selectedColor: colorScheme.primary.withValues(
+          alpha: isDark ? 0.35 : 0.2,
+        ),
+        checkmarkColor: colorScheme.onSurface,
+        iconTheme: IconThemeData(color: colorScheme.onSurface, size: 16),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       ),
       inputDecorationTheme: InputDecorationTheme(

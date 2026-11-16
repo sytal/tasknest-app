@@ -12,6 +12,14 @@ class _Pill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Lift the text colour toward white (dark theme) or black (light theme)
+    // so small pills keep >= 4.5:1 contrast on their tinted background.
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fg = Color.lerp(
+      color,
+      isDark ? Colors.white : Colors.black,
+      isDark ? 0.6 : 0.4,
+    )!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
@@ -23,13 +31,13 @@ class _Pill extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 12, color: color),
+            Icon(icon, size: 12, color: fg),
             const SizedBox(width: 4),
           ],
           Text(
             label,
             style: TextStyle(
-              color: color,
+              color: fg,
               fontSize: 11,
               fontWeight: FontWeight.w700,
             ),
