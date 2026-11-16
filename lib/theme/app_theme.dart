@@ -136,22 +136,15 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
           side: BorderSide(
-            color: isDark
-                ? const Color(0xFF2B3E64)
-                : AppColors.cream300,
+            color: isDark ? const Color(0xFF2B3E64) : AppColors.cream300,
             width: 1,
           ),
         ),
         clipBehavior: Clip.antiAlias,
       ),
       chipTheme: ChipThemeData(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        labelStyle: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -164,11 +157,15 @@ class AppTheme {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: colorScheme.outline.withValues(alpha: 0.5)),
+          borderSide: BorderSide(
+            color: colorScheme.outline.withValues(alpha: 0.5),
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: colorScheme.outline.withValues(alpha: 0.5)),
+          borderSide: BorderSide(
+            color: colorScheme.outline.withValues(alpha: 0.5),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -212,15 +209,11 @@ class AppTheme {
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: isDark ? AppColors.cream100 : AppColors.navy700,
         foregroundColor: isDark ? AppColors.navy900 : AppColors.cream50,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: isDark ? const Color(0xFF17294B) : AppColors.cream100,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: isDark ? AppColors.cream100 : AppColors.navy700,

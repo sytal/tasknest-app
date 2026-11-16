@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -7,7 +8,18 @@ class ApiException implements Exception {
   final int statusCode;
   final String message;
 
-  ApiException(this.statusCode, this.message);
+  /// Laravel 422 `errors` map: field name -> first message.
+  final Map<String, String> fieldErrors;
+
+  /// Seconds to wait before retrying (429 `Retry-After`), if provided.
+  final int? retryAfter;
+
+  ApiException(
+    this.statusCode,
+    this.message, {
+    this.fieldErrors = const {},
+    this.retryAfter,
+  });
 
   @override
   String toString() => message;
@@ -29,6 +41,9 @@ class ApiClient {
   static const _tokenKey = 'tasknest_token';
 
   static String? _cachedToken;
+
+  /// Test hook: forget the in-memory token so storage is re-read.
+  static void resetCacheForTests() => _cachedToken = null;
 
   static Future<String?> getToken() async {
     if (_cachedToken != null) return _cachedToken;
@@ -67,6 +82,17 @@ class ApiClient {
     return _handle(response);
   }
 
+  /// GET returning the whole JSON body (keeps `meta` / `links` of paginated
+  /// responses, which [get] strips by unwrapping `data`).
+  static Future<Map<String, dynamic>> getPage(String path) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl$path'),
+      headers: await _headers(),
+    );
+    _handle(response);
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
   static Future<dynamic> post(String path, Map<String, dynamic> body) async {
     final response = await http.post(
       Uri.parse('$baseUrl$path'),
@@ -74,6 +100,19 @@ class ApiClient {
       body: jsonEncode(body),
     );
     return _handle(response);
+  }
+
+  static Future<Map<String, dynamic>> postRaw(
+    String path,
+    Map<String, dynamic> body,
+  ) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl$path'),
+      headers: await _headers(),
+      body: jsonEncode(body),
+    );
+    _handle(response);
+    return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
   static Future<dynamic> put(String path, Map<String, dynamic> body) async {
@@ -122,13 +161,31 @@ class ApiClient {
     }
 
     String message = 'Request failed ($status)';
+    final fields = <String, String>{};
     if (decoded is Map<String, dynamic>) {
       if (decoded['message'] != null) {
         message = decoded['message'].toString();
-      } else if (decoded['errors'] != null) {
-        message = decoded['errors'].toString();
+      }
+      final errors = decoded['errors'];
+      if (errors is Map) {
+        errors.forEach((k, v) {
+          final first = v is List && v.isNotEmpty ? v.first : v;
+          fields[k.toString()] = first.toString();
+        });
       }
     }
-    throw ApiException(status, message);
+    int? retry;
+    if (status == 429) {
+      retry = int.tryParse(response.headers['retry-after'] ?? '');
+      message = retry == null
+          ? 'Too many attempts. Please wait a moment and try again.'
+          : 'Too many attempts. Try again in $retry seconds.';
+    }
+    throw ApiException(
+      status,
+      message,
+      fieldErrors: fields,
+      retryAfter: retry,
+    );
   }
 }

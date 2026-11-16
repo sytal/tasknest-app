@@ -36,7 +36,12 @@ class SectionHeader extends StatelessWidget {
   final Widget? trailing;
   final IconData? icon;
 
-  const SectionHeader({super.key, required this.title, this.trailing, this.icon});
+  const SectionHeader({
+    super.key,
+    required this.title,
+    this.trailing,
+    this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {

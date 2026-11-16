@@ -26,8 +26,10 @@ class AuthService {
   }
 
   static Future<AppUser> me() async {
-    final data = await ApiClient.get('/me');
-    return AppUser.fromJson(data as Map<String, dynamic>);
+    final data = await ApiClient.get('/me') as Map<String, dynamic>;
+    // /me responds with {"user": {...}} (no "data" wrapper).
+    final user = data['user'] ?? data;
+    return AppUser.fromJson(user as Map<String, dynamic>);
   }
 
   static Future<bool> hasToken() async {

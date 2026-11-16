@@ -41,7 +41,8 @@ class GlassSurface extends StatelessWidget {
           decoration: BoxDecoration(
             color: tintColor.withValues(alpha: tintOpacity),
             borderRadius: borderRadius,
-            border: border ??
+            border:
+                border ??
                 Border.all(
                   color: Colors.white.withValues(alpha: 0.18),
                   width: 1,
@@ -78,7 +79,8 @@ class FadeSlideIn extends StatelessWidget {
       curve: const Interval(0.0, 1.0, curve: Curves.easeOutCubic),
       builder: (context, value, child) {
         // Hold at 0 during the delay window, then ease in.
-        final delayFraction = delay.inMilliseconds /
+        final delayFraction =
+            delay.inMilliseconds /
             (duration + delay).inMilliseconds.clamp(1, double.infinity);
         final adjusted = delayFraction >= 1
             ? value

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/task.dart';
 
 /// Shared pill-style badge used by [StatusChip] and [PriorityChip].
@@ -37,6 +38,17 @@ class _Pill extends StatelessWidget {
       ),
     );
   }
+}
+
+class OverdueChip extends StatelessWidget {
+  const OverdueChip({super.key});
+
+  @override
+  Widget build(BuildContext context) => const _Pill(
+    label: 'Overdue',
+    color: Color(0xFFE5484D),
+    icon: Icons.warning_amber_rounded,
+  );
 }
 
 class StatusChip extends StatelessWidget {
@@ -107,13 +119,23 @@ class InitialsAvatar extends StatelessWidget {
   final double radius;
   final String? avatarUrl;
 
-  const InitialsAvatar({super.key, required this.name, this.radius = 12, this.avatarUrl});
+  const InitialsAvatar({
+    super.key,
+    required this.name,
+    this.radius = 12,
+    this.avatarUrl,
+  });
 
   String get _initials {
-    final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    final parts = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
     if (parts.isEmpty) return '?';
     if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
-    return (parts.first.substring(0, 1) + parts.last.substring(0, 1)).toUpperCase();
+    return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
+        .toUpperCase();
   }
 
   Color _colorFor(String seed) {

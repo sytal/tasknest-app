@@ -10,10 +10,16 @@ class InitialsAvatar extends StatelessWidget {
   const InitialsAvatar({super.key, required this.name, this.size = 24});
 
   String get _initials {
-    final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    final parts = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
     if (parts.isEmpty) return '?';
     if (parts.length == 1) {
-      return parts.first.substring(0, parts.first.length >= 2 ? 2 : 1).toUpperCase();
+      return parts.first
+          .substring(0, parts.first.length >= 2 ? 2 : 1)
+          .toUpperCase();
     }
     return (parts.first[0] + parts.last[0]).toUpperCase();
   }
@@ -42,7 +48,9 @@ class InitialsAvatar extends StatelessWidget {
       child: Text(
         _initials,
         style: TextStyle(
-          color: scheme.brightness == Brightness.dark ? scheme.onPrimary : Colors.white,
+          color: scheme.brightness == Brightness.dark
+              ? scheme.onPrimary
+              : Colors.white,
           fontSize: size * 0.4,
           fontWeight: FontWeight.w700,
         ),
@@ -58,7 +66,12 @@ class AvatarStack extends StatelessWidget {
   final int max;
   final double size;
 
-  const AvatarStack({super.key, required this.names, this.max = 3, this.size = 24});
+  const AvatarStack({
+    super.key,
+    required this.names,
+    this.max = 3,
+    this.size = 24,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +82,10 @@ class AvatarStack extends StatelessWidget {
 
     return SizedBox(
       height: size,
-      width: size + (visible.length - 1) * size * 0.65 + (overflow > 0 ? size * 0.65 : 0),
+      width:
+          size +
+          (visible.length - 1) * size * 0.65 +
+          (overflow > 0 ? size * 0.65 : 0),
       child: Stack(
         children: [
           for (var i = 0; i < visible.length; i++)

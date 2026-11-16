@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
+
 import '../models/user.dart';
+import 'api_client.dart';
 import 'auth_service.dart';
 
 /// Holds the currently logged-in user for the whole app.
@@ -20,7 +22,13 @@ class Session extends ChangeNotifier {
       currentUser = await AuthService.me();
       notifyListeners();
       return true;
+    } on ApiException catch (e) {
+      // Only drop the token when the server says it is invalid.
+      if (e.statusCode == 401) await ApiClient.setToken(null);
+      currentUser = null;
+      return false;
     } catch (_) {
+      // Network error: keep the token so a retry/reload can restore the session.
       currentUser = null;
       return false;
     }
