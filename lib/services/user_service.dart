@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:typed_data';
+
 import 'package:http/http.dart' as http;
+
 import '../models/task_assignee.dart';
 import '../models/user.dart';
 import 'api_client.dart';
@@ -28,7 +30,8 @@ class UserService {
       'email': email,
       'password': password,
       'role': role,
-      if (designation != null && designation.isNotEmpty) 'designation': designation,
+      if (designation != null && designation.isNotEmpty)
+        'designation': designation,
     });
     return TaskAssignee.fromJson(data as Map<String, dynamic>);
   }

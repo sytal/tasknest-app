@@ -68,9 +68,7 @@ class TaskService {
     required int id,
     required String status,
   }) async {
-    final data = await ApiClient.patch('/tasks/$id/status', {
-      'status': status,
-    });
+    final data = await ApiClient.patch('/tasks/$id/status', {'status': status});
     return TaskItem.fromJson(data as Map<String, dynamic>);
   }
 

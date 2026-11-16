@@ -5,6 +5,7 @@ class AppUser {
   final String role; // director | ceo | member
   final String? designation;
   final String? avatarUrl;
+  final bool isActive;
 
   AppUser({
     required this.id,
@@ -13,6 +14,7 @@ class AppUser {
     required this.role,
     this.designation,
     this.avatarUrl,
+    this.isActive = true,
   });
 
   bool get isDirectorOrCeo => role == 'director' || role == 'ceo';
@@ -25,6 +27,7 @@ class AppUser {
       role: json['role']?.toString() ?? 'member',
       designation: json['designation']?.toString(),
       avatarUrl: json['avatar_url']?.toString(),
+      isActive: json['is_active'] != false,
     );
   }
 
@@ -35,16 +38,17 @@ class AppUser {
       email: email,
       role: role,
       designation: designation,
+      isActive: isActive,
       avatarUrl: clearAvatarUrl ? null : (avatarUrl ?? this.avatarUrl),
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'email': email,
-        'role': role,
-        'designation': designation,
-        'avatar_url': avatarUrl,
-      };
+    'id': id,
+    'name': name,
+    'email': email,
+    'role': role,
+    'designation': designation,
+    'avatar_url': avatarUrl,
+  };
 }

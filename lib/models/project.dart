@@ -7,6 +7,9 @@ class Project {
   final List<ProjectMember> members;
   final int tasksCount;
   final int tasksDoneCount;
+  final int overdueCount;
+  final String status; // active | archived
+  final String? dueDate;
 
   Project({
     required this.id,
@@ -15,7 +18,12 @@ class Project {
     required this.members,
     this.tasksCount = 0,
     this.tasksDoneCount = 0,
+    this.overdueCount = 0,
+    this.status = 'active',
+    this.dueDate,
   });
+
+  bool get isArchived => status == 'archived';
 
   List<ProjectMember> get leads => members.where((m) => m.isLead).toList();
 
@@ -36,6 +44,9 @@ class Project {
       tasksDoneCount: json['tasks_done_count'] is int
           ? json['tasks_done_count'] as int
           : int.tryParse('${json['tasks_done_count']}') ?? 0,
+      overdueCount: int.tryParse('${json['overdue_count']}') ?? 0,
+      status: json['status']?.toString() ?? 'active',
+      dueDate: json['due_date']?.toString(),
     );
   }
 }
