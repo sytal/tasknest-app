@@ -77,7 +77,8 @@ class _ProjectEditScreenState extends State<ProjectEditScreen> {
           name: _nameController.text.trim(),
           description: _descController.text.trim(),
           members: [
-            for (final e in _picked.entries) {'user_id': e.key, 'project_role': e.value},
+            for (final e in _picked.entries)
+              {'user_id': e.key, 'project_role': e.value},
           ],
         );
       }
@@ -152,28 +153,54 @@ class _ProjectEditScreenState extends State<ProjectEditScreen> {
                     ),
                     if (!_isEditing && _users.isNotEmpty) ...[
                       const SizedBox(height: 8),
-                      Text('Members (optional)', style: Theme.of(context).textTheme.titleSmall),
+                      Text(
+                        'Members (optional)',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
                       for (final u in _users)
-                        CheckboxListTile(
-                          dense: true,
-                          contentPadding: EdgeInsets.zero,
-                          value: _picked.containsKey(u.id),
-                          title: Text(u.name),
-                          secondary: _picked.containsKey(u.id)
-                              ? SegmentedButton<String>(
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CheckboxListTile(
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              controlAffinity: ListTileControlAffinity.leading,
+                              value: _picked.containsKey(u.id),
+                              title: Text(
+                                u.name,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              onChanged: (v) => setState(() {
+                                _dirty = true;
+                                v == true
+                                    ? _picked[u.id] = 'member'
+                                    : _picked.remove(u.id);
+                              }),
+                            ),
+                            if (_picked.containsKey(u.id))
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  left: 40,
+                                  bottom: 8,
+                                ),
+                                child: SegmentedButton<String>(
                                   showSelectedIcon: false,
                                   segments: const [
-                                    ButtonSegment(value: 'member', label: Text('Member')),
-                                    ButtonSegment(value: 'lead', label: Text('Lead')),
+                                    ButtonSegment(
+                                      value: 'member',
+                                      label: Text('Member'),
+                                    ),
+                                    ButtonSegment(
+                                      value: 'lead',
+                                      label: Text('Lead'),
+                                    ),
                                   ],
                                   selected: {_picked[u.id]!},
-                                  onSelectionChanged: (v) => setState(() => _picked[u.id] = v.first),
-                                )
-                              : null,
-                          onChanged: (v) => setState(() {
-                            _dirty = true;
-                            v == true ? _picked[u.id] = 'member' : _picked.remove(u.id);
-                          }),
+                                  onSelectionChanged: (v) =>
+                                      setState(() => _picked[u.id] = v.first),
+                                ),
+                              ),
+                          ],
                         ),
                     ],
                     if (_error != null) ...[
