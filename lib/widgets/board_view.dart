@@ -44,7 +44,9 @@ class BoardView extends StatelessWidget {
     return ListView(
       scrollDirection: Axis.horizontal,
       physics: const PageScrollPhysics(),
-      children: [for (final c in columns) SizedBox(width: w.clamp(240, 360), child: c)],
+      children: [
+        for (final c in columns) SizedBox(width: w.clamp(240, 360), child: c),
+      ],
     );
   }
 }
@@ -84,28 +86,54 @@ class _Column extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(4, 2, 4, 8),
-              child: Row(children: [
-                Expanded(child: Text(StatusOptions.label(status), style: Theme.of(context).textTheme.titleSmall)),
-                Text('${tasks.length}', style: Theme.of(context).textTheme.labelLarge),
-              ]),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      StatusOptions.label(status),
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                  ),
+                  Text(
+                    '${tasks.length}',
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                ],
+              ),
             ),
             Expanded(
               child: tasks.isEmpty
-                  ? Center(child: Text(canMove ? 'Drop tasks here' : 'No tasks', style: Theme.of(context).textTheme.bodySmall))
-                  : ListView(children: [
-                      for (final t in tasks)
-                        canMove
-                            ? LongPressDraggable<TaskItem>(
-                                data: t,
-                                feedback: Material(
-                                  color: Colors.transparent,
-                                  child: SizedBox(width: 260, child: _Card(task: t, onOpen: () {})),
-                                ),
-                                childWhenDragging: Opacity(opacity: 0.3, child: _Card(task: t, onOpen: () {})),
-                                child: _Card(task: t, onOpen: () => onOpen(t)),
-                              )
-                            : _Card(task: t, onOpen: () => onOpen(t)),
-                    ]),
+                  ? Center(
+                      child: Text(
+                        canMove ? 'Drop tasks here' : 'No tasks',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    )
+                  : ListView(
+                      children: [
+                        for (final t in tasks)
+                          canMove
+                              ? LongPressDraggable<TaskItem>(
+                                  data: t,
+                                  feedback: Material(
+                                    color: Colors.transparent,
+                                    child: SizedBox(
+                                      width: 260,
+                                      child: _Card(task: t, onOpen: () {}),
+                                    ),
+                                  ),
+                                  childWhenDragging: Opacity(
+                                    opacity: 0.3,
+                                    child: _Card(task: t, onOpen: () {}),
+                                  ),
+                                  child: _Card(
+                                    task: t,
+                                    onOpen: () => onOpen(t),
+                                  ),
+                                )
+                              : _Card(task: t, onOpen: () => onOpen(t)),
+                      ],
+                    ),
             ),
           ],
         ),
@@ -129,34 +157,60 @@ class _Card extends StatelessWidget {
         onTap: onOpen,
         child: Padding(
           padding: const EdgeInsets.all(10),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(task.title, maxLines: 3, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                PriorityChip(priority: task.priority),
-                if (task.subtasksCount > 0)
-                  Text('${task.subtasksDoneCount}/${task.subtasksCount}', style: Theme.of(context).textTheme.labelSmall),
-                if (task.assignee != null)
-                  InitialsAvatar(name: task.assignee!.name, radius: 11, avatarUrl: task.assignee!.avatarUrl),
-              ],
-            ),
-            if (due != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: Row(children: [
-                  Icon(Icons.event_outlined, size: 14, color: task.isOverdue ? scheme.error : null),
-                  const SizedBox(width: 4),
-                  Flexible(child: Text(
-                    '${DateFormat('MMM d').format(due)}${task.isOverdue ? ' · Overdue' : ''}',
-                    style: TextStyle(fontSize: 12, color: task.isOverdue ? scheme.error : null),
-                  )),
-                ]),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                task.title,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
-          ]),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  PriorityChip(priority: task.priority),
+                  if (task.subtasksCount > 0)
+                    Text(
+                      '${task.subtasksDoneCount}/${task.subtasksCount}',
+                      style: Theme.of(context).textTheme.labelSmall,
+                    ),
+                  if (task.assignee != null)
+                    InitialsAvatar(
+                      name: task.assignee!.name,
+                      radius: 11,
+                      avatarUrl: task.assignee!.avatarUrl,
+                    ),
+                ],
+              ),
+              if (due != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.event_outlined,
+                        size: 14,
+                        color: task.isOverdue ? scheme.error : null,
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          '${DateFormat('MMM d').format(due)}${task.isOverdue ? ' · Overdue' : ''}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: task.isOverdue ? scheme.error : null,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

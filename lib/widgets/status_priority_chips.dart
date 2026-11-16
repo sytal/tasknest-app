@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/brand_colors.dart';
 import '../models/task.dart';
 
 /// Shared pill-style badge used by [StatusChip] and [PriorityChip].
@@ -66,11 +67,11 @@ class StatusChip extends StatelessWidget {
   static Color colorFor(String status) {
     switch (status) {
       case StatusOptions.inProgress:
-        return const Color(0xFFE8A200); // amber
+        return AppColors.amber;
       case StatusOptions.done:
-        return const Color(0xFF1FAA59); // green
+        return AppColors.leaf;
       default:
-        return const Color(0xFF6B7280); // neutral grey
+        return AppColors.navy; // navy tint
     }
   }
 
@@ -102,11 +103,11 @@ class PriorityChip extends StatelessWidget {
   static Color colorFor(String priority) {
     switch (priority) {
       case PriorityOptions.high:
-        return const Color(0xFFE5484D); // red
+        return AppColors.orange;
       case PriorityOptions.low:
-        return const Color(0xFF6B8AFD); // blue/grey
+        return AppColors.leaf;
       default:
-        return const Color(0xFFF59E0B); // orange
+        return AppColors.amber;
     }
   }
 

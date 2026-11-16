@@ -1,3 +1,5 @@
+import '../core/theme/brand_colors.dart';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -126,16 +128,14 @@ class TaskRow extends StatelessWidget {
                                 Icons.event_outlined,
                                 size: 14,
                                 color: overdue
-                                    ? const Color(0xFFE5484D)
+                                    ? AppColors.danger
                                     : scheme.onSurfaceVariant,
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 dateFormat.format(due),
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  color: overdue
-                                      ? const Color(0xFFE5484D)
-                                      : null,
+                                  color: overdue ? AppColors.danger : null,
                                   fontWeight: overdue ? FontWeight.w700 : null,
                                 ),
                               ),
