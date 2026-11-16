@@ -55,7 +55,7 @@ class OverdueChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) => const _Pill(
     label: 'Overdue',
-    color: Color(0xFFE5484D),
+    color: AppColors.danger,
     icon: Icons.warning_amber_rounded,
   );
 }
@@ -148,16 +148,7 @@ class InitialsAvatar extends StatelessWidget {
   }
 
   Color _colorFor(String seed) {
-    const palette = [
-      Color(0xFF6C4CF1),
-      Color(0xFF2563EB),
-      Color(0xFF059669),
-      Color(0xFFD97706),
-      Color(0xFFDB2777),
-      Color(0xFF0D9488),
-    ];
-    final idx = seed.codeUnits.fold<int>(0, (a, b) => a + b) % palette.length;
-    return palette[idx];
+    return AppColors.avatarPalette[AppColors.avatarIndex(seed)];
   }
 
   @override

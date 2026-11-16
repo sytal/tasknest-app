@@ -1,3 +1,5 @@
+import "../core/layout/responsive.dart";
+
 import 'package:flutter/material.dart';
 
 import '../models/collab.dart';
@@ -98,103 +100,118 @@ class _DashboardSectionsState extends State<DashboardSections> {
       1,
       (m, w) => w.openTasks > m ? w.openTasks : m,
     );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SectionHeader(
-          title: 'Due this week',
-          icon: Icons.event_available_outlined,
-          trailing: TextButton(
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => Scaffold(
-                  appBar: AppBar(title: const Text('My Tasks')),
-                  body: const MyTasksScreen(),
-                ),
+    final dueBlock = <Widget>[
+      SectionHeader(
+        title: 'Due this week',
+        icon: Icons.event_available_outlined,
+        trailing: TextButton(
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => Scaffold(
+                appBar: AppBar(title: const Text('My Tasks')),
+                body: const MyTasksScreen(),
               ),
             ),
-            child: const Text('See all'),
+          ),
+          child: const Text('See all'),
+        ),
+      ),
+      if (due.isEmpty)
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 8),
+          child: Text('Nothing due in the next 7 days.'),
+        )
+      else
+        for (final t in due)
+          AppCard(
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            padding: EdgeInsets.zero,
+            child: ListTile(
+              dense: true,
+              leading: Icon(
+                t.isOverdue ? Icons.warning_amber : Icons.task_alt,
+                color: t.isOverdue ? Theme.of(context).colorScheme.error : null,
+              ),
+              title: Text(
+                t.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              subtitle: Text('${t.projectName ?? ''} · due ${t.dueDate ?? ''}'),
+              onTap: () async {
+                await openTaskDetail(context, t, null);
+                _load();
+              },
+            ),
+          ),
+    ];
+    final actBlock = <Widget>[
+      const SectionHeader(title: 'Recently updated', icon: Icons.history),
+      if (activity.isEmpty)
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 8),
+          child: Text('No recent activity.'),
+        )
+      else
+        for (final a in activity)
+          ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.circle, size: 8),
+            title: Text(a.message),
+            subtitle: Text(relativeTime(a.createdAt)),
+          ),
+    ];
+    final workBlock = <Widget>[
+      const SizedBox(height: 12),
+      const SectionHeader(title: 'Team workload', icon: Icons.bar_chart),
+      if (workload.isEmpty) const Text('No workload data.'),
+      for (final w in workload)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 110,
+                child: Text(w.name, overflow: TextOverflow.ellipsis),
+              ),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    value: w.openTasks / maxLoad,
+                    minHeight: 8,
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 32,
+                child: Text('${w.openTasks}', textAlign: TextAlign.right),
+              ),
+            ],
           ),
         ),
-        if (due.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
-            child: Text('Nothing due in the next 7 days.'),
-          )
-        else
-          for (final t in due)
-            AppCard(
-              margin: const EdgeInsets.symmetric(vertical: 4),
-              padding: EdgeInsets.zero,
-              child: ListTile(
-                dense: true,
-                leading: Icon(
-                  t.isOverdue ? Icons.warning_amber : Icons.task_alt,
-                  color: t.isOverdue
-                      ? Theme.of(context).colorScheme.error
-                      : null,
-                ),
-                title: Text(
-                  t.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                subtitle: Text(
-                  '${t.projectName ?? ''} · due ${t.dueDate ?? ''}',
-                ),
-                onTap: () async {
-                  await openTaskDetail(context, t, null);
-                  _load();
-                },
-              ),
-            ),
-        const SizedBox(height: 12),
-        const SectionHeader(title: 'Recently updated', icon: Icons.history),
-        if (activity.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
-            child: Text('No recent activity.'),
-          )
-        else
-          for (final a in activity)
-            ListTile(
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.circle, size: 8),
-              title: Text(a.message),
-              subtitle: Text(relativeTime(a.createdAt)),
-            ),
-        if (widget.showWorkload) ...[
-          const SizedBox(height: 12),
-          const SectionHeader(title: 'Team workload', icon: Icons.bar_chart),
-          if (workload.isEmpty) const Text('No workload data.'),
-          for (final w in workload)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 110,
-                    child: Text(w.name, overflow: TextOverflow.ellipsis),
-                  ),
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: LinearProgressIndicator(
-                        value: w.openTasks / maxLoad,
-                        minHeight: 8,
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: 32,
-                    child: Text('${w.openTasks}', textAlign: TextAlign.right),
-                  ),
-                ],
-              ),
-            ),
+    ];
+    Widget col(List<Widget> c) =>
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: c);
+    if (context.isWide && widget.showWorkload) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 3,
+            child: col([...dueBlock, const SizedBox(height: 12), ...actBlock]),
+          ),
+          const SizedBox(width: Space.xl),
+          Expanded(flex: 2, child: col(workBlock)),
         ],
-      ],
-    );
+      );
+    }
+    return col([
+      ...dueBlock,
+      const SizedBox(height: 12),
+      ...actBlock,
+      if (widget.showWorkload) ...[const SizedBox(height: 12), ...workBlock],
+    ]);
   }
 }

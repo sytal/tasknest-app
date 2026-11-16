@@ -24,6 +24,32 @@ class AppColors {
   static const danger = Color(0xFFD64545);
   static const dangerDark = Color(0xFFFF7A7A);
 
+  // Data colours (avatars, labels) derived from the brand family.
+  static const onDarkSurface = Color(0xFFEAF0FA);
+  static const surfaceDarkHigh = Color(0xFF1B3050);
+  static const fieldDark = Color(0xFF1C2E52);
+  static const avatarPalette = [
+    navy,
+    Color(0xFFC96A00),
+    Color(0xFF3F7F1F),
+    Color(0xFF1B3A7A),
+    Color(0xFF8A5A00),
+    Color(0xFF2E6F73),
+  ];
+  static const labelPalette = <String, Color>{
+    'red': danger,
+    'orange': orange,
+    'amber': Color(0xFFD9A400),
+    'green': leaf,
+    'teal': Color(0xFF2E8F8F),
+    'blue': Color(0xFF3E63DD),
+    'purple': Color(0xFF8E4EC6),
+    'pink': Color(0xFFD6409F),
+  };
+  static int avatarIndex(String seed) =>
+      seed.codeUnits.fold<int>(0, (a, b) => a + b) % avatarPalette.length;
+  static const labelFallback = Color(0xFF8B8D98);
+
   // Neutral text.
   static const textPrimary = Color(0xFF0C243C);
   static const textSecondary = Color(0xFF4B5A70);

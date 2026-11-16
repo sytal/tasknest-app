@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../core/layout/responsive.dart';
 import '../services/api_client.dart';
 import '../services/session.dart';
+import '../services/theme_controller.dart';
 import '../utils/feedback.dart';
 import '../services/user_service.dart';
 import '../widgets/app_card.dart';
@@ -319,6 +320,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 builder: (_) => const ChangePasswordScreen(),
                               ),
                             ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    AppCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Appearance',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 8),
+                          SegmentedButton<ThemeMode>(
+                            showSelectedIcon: false,
+                            segments: const [
+                              ButtonSegment(
+                                value: ThemeMode.system,
+                                icon: Icon(Icons.brightness_auto_outlined),
+                                label: Text('System'),
+                              ),
+                              ButtonSegment(
+                                value: ThemeMode.light,
+                                icon: Icon(Icons.light_mode_outlined),
+                                label: Text('Light'),
+                              ),
+                              ButtonSegment(
+                                value: ThemeMode.dark,
+                                icon: Icon(Icons.dark_mode_outlined),
+                                label: Text('Dark'),
+                              ),
+                            ],
+                            selected: {context.watch<ThemeController>().mode},
+                            onSelectionChanged: (v) =>
+                                context.read<ThemeController>().set(v.first),
                           ),
                         ],
                       ),

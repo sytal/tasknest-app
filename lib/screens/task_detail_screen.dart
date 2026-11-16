@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../core/theme/brand_colors.dart';
 import '../models/collab.dart';
 import '../models/project.dart';
 import '../models/task.dart';
@@ -30,17 +31,8 @@ Future<bool?> openTaskDetail(
   );
 }
 
-Color labelColor(String name) => switch (name) {
-  'red' => const Color(0xFFE5484D),
-  'orange' => const Color(0xFFF76B15),
-  'amber' => const Color(0xFFD9A400),
-  'green' => const Color(0xFF30A46C),
-  'teal' => const Color(0xFF12A594),
-  'blue' => const Color(0xFF3E63DD),
-  'purple' => const Color(0xFF8E4EC6),
-  'pink' => const Color(0xFFD6409F),
-  _ => const Color(0xFF8B8D98),
-};
+Color labelColor(String name) =>
+    AppColors.labelPalette[name] ?? AppColors.labelFallback;
 
 class LabelChip extends StatelessWidget {
   final Label label;

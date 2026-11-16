@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../core/layout/responsive.dart';
+import '../core/widgets/app_widgets.dart';
 import '../models/user.dart';
 import '../services/collab_service.dart';
 import '../services/session.dart';
@@ -233,6 +235,87 @@ class _UsersAdminScreenState extends State<UsersAdminScreen> {
     }
   }
 
+  Widget _menu(AppUser u, int? meId) => PopupMenuButton<String>(
+    tooltip: 'User actions',
+    onSelected: (a) {
+      if (a == 'edit') _edit(u);
+      if (a == 'active') _toggleActive(u);
+      if (a == 'reset') _resetPassword(u);
+    },
+    itemBuilder: (_) => [
+      const PopupMenuItem(value: 'edit', child: Text('Edit')),
+      if (u.id != meId)
+        PopupMenuItem(
+          value: 'active',
+          child: Text(u.isActive ? 'Deactivate' : 'Reactivate'),
+        ),
+      const PopupMenuItem(value: 'reset', child: Text('Reset password')),
+    ],
+  );
+
+  /// Wide-screen layout: sortable-looking table with all columns visible.
+  Widget _table(int? meId, ColorScheme scheme) => ListView(
+    padding: EdgeInsets.fromLTRB(
+      context.pagePadding,
+      0,
+      context.pagePadding,
+      96,
+    ),
+    children: [
+      Card(
+        child: SizedBox(
+          width: double.infinity,
+          child: DataTable(
+            headingTextStyle: Theme.of(context).textTheme.labelLarge,
+            columns: const [
+              DataColumn(label: Text('User')),
+              DataColumn(label: Text('Email')),
+              DataColumn(label: Text('Designation')),
+              DataColumn(label: Text('Role')),
+              DataColumn(label: Text('Status')),
+              DataColumn(label: Text('')),
+            ],
+            rows: [
+              for (final u in _users)
+                DataRow(
+                  cells: [
+                    DataCell(
+                      Row(
+                        children: [
+                          UserAvatar(
+                            name: u.name,
+                            imageUrl: u.avatarUrl,
+                            size: 32,
+                          ),
+                          const SizedBox(width: Space.sm),
+                          Text(u.name),
+                        ],
+                      ),
+                    ),
+                    DataCell(Text(u.email)),
+                    DataCell(Text(u.designation ?? '-')),
+                    DataCell(Text(u.role.toUpperCase())),
+                    DataCell(
+                      Text(
+                        u.isActive ? 'Active' : 'Disabled',
+                        style: TextStyle(
+                          color: u.isActive ? null : scheme.error,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    DataCell(_menu(u, meId)),
+                  ],
+                ),
+            ],
+          ),
+        ),
+      ),
+      if (_more)
+        TextButton(onPressed: _loadMore, child: const Text('Load more')),
+    ],
+  );
+
   @override
   Widget build(BuildContext context) {
     final me = context.read<Session>().currentUser;
@@ -281,6 +364,8 @@ class _UsersAdminScreenState extends State<UsersAdminScreen> {
                               Center(child: Text('No users found')),
                             ],
                           )
+                        : context.isWide
+                        ? _table(me?.id, scheme)
                         : ListView.builder(
                             padding: const EdgeInsets.only(bottom: 96),
                             itemCount: _users.length + (_more ? 1 : 0),
@@ -317,33 +402,7 @@ class _UsersAdminScreenState extends State<UsersAdminScreen> {
                                         color: u.isActive ? null : scheme.error,
                                       ),
                                     ),
-                                    PopupMenuButton<String>(
-                                      tooltip: 'User actions',
-                                      onSelected: (a) {
-                                        if (a == 'edit') _edit(u);
-                                        if (a == 'active') _toggleActive(u);
-                                        if (a == 'reset') _resetPassword(u);
-                                      },
-                                      itemBuilder: (_) => [
-                                        const PopupMenuItem(
-                                          value: 'edit',
-                                          child: Text('Edit'),
-                                        ),
-                                        if (u.id != me?.id)
-                                          PopupMenuItem(
-                                            value: 'active',
-                                            child: Text(
-                                              u.isActive
-                                                  ? 'Deactivate'
-                                                  : 'Reactivate',
-                                            ),
-                                          ),
-                                        const PopupMenuItem(
-                                          value: 'reset',
-                                          child: Text('Reset password'),
-                                        ),
-                                      ],
-                                    ),
+                                    _menu(u, me?.id),
                                   ],
                                 ),
                               );

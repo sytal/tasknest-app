@@ -31,8 +31,8 @@ class AppTheme {
             tertiary: AppColors.leafDark,
             onTertiary: AppColors.navyDark,
             surface: AppColors.surfaceDark,
-            onSurface: const Color(0xFFEAF0FA),
-            surfaceContainerHighest: const Color(0xFF1B3050),
+            onSurface: AppColors.onDarkSurface,
+            surfaceContainerHighest: AppColors.surfaceDarkHigh,
             error: AppColors.dangerDark,
             onError: AppColors.navyDark,
             outline: AppColors.outlineDark,
@@ -143,7 +143,7 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: isDark
-            ? const Color(0xFF1C2E52)
+            ? AppColors.fieldDark
             : AppColors.cream200.withValues(alpha: 0.6),
         hintStyle: TextStyle(
           color: isDark ? AppColors.navy200 : AppColors.textDarkSecondary,

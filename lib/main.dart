@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_shell.dart';
 import 'services/session.dart';
+import 'services/theme_controller.dart';
 import 'theme/app_theme.dart';
 import 'core/widgets/brand_logo.dart';
 
@@ -14,7 +15,13 @@ void main() {
   // Expose the semantics tree on web so screen readers and UI tests can see widgets.
   if (kIsWeb) SemanticsBinding.instance.ensureSemantics();
   runApp(
-    ChangeNotifierProvider(create: (_) => Session(), child: const MyApp()),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => Session()),
+        ChangeNotifierProvider(create: (_) => ThemeController()..load()),
+      ],
+      child: const MyApp(),
+    ),
   );
 }
 
@@ -27,7 +34,7 @@ class MyApp extends StatelessWidget {
       title: 'TaskNest',
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      themeMode: ThemeMode.system,
+      themeMode: context.watch<ThemeController>().mode,
       home: const _StartupGate(),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../core/layout/responsive.dart';
 import '../models/task.dart';
 import '../services/collab_service.dart';
 import '../utils/feedback.dart';
@@ -72,142 +73,207 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final today = DateUtils.dateOnly(DateTime.now());
     final dayTasks = _selected == null ? <TaskItem>[] : _on(_selected!);
 
+    final calendar = <Widget>[
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            tooltip: 'Previous month',
+            icon: const Icon(Icons.chevron_left),
+            onPressed: () => _shift(-1),
+          ),
+          Text(
+            DateFormat('MMMM y').format(_month),
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          IconButton(
+            tooltip: 'Next month',
+            icon: const Icon(Icons.chevron_right),
+            onPressed: () => _shift(1),
+          ),
+        ],
+      ),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          children: [
+            for (final d in const ['M', 'T', 'W', 'T', 'F', 'S', 'S'])
+              Expanded(
+                child: Center(
+                  child: Text(d, style: Theme.of(context).textTheme.labelSmall),
+                ),
+              ),
+          ],
+        ),
+      ),
+      if (_loading) const LinearProgressIndicator(),
+      Padding(
+        padding: const EdgeInsets.all(12),
+        child: GridView.count(
+          crossAxisCount: 7,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          children: [
+            for (var i = 0; i < offset; i++) const SizedBox.shrink(),
+            for (var day = 1; day <= days; day++)
+              Builder(
+                builder: (context) {
+                  final date = DateTime(_month.year, _month.month, day);
+                  final ts = _on(date);
+                  final overdue = ts.any((t) => t.isOverdue);
+                  final sel =
+                      _selected != null && DateUtils.isSameDay(_selected, date);
+                  return Semantics(
+                    label:
+                        '${DateFormat('MMMM d').format(date)}, ${ts.length} tasks due',
+                    button: true,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () => setState(() => _selected = date),
+                      child: Container(
+                        margin: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          color: sel
+                              ? scheme.primary.withValues(alpha: 0.2)
+                              : null,
+                          border: DateUtils.isSameDay(date, today)
+                              ? Border.all(color: scheme.primary)
+                              : null,
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text('$day'),
+                            if (ts.isNotEmpty)
+                              Container(
+                                width: 6,
+                                height: 6,
+                                margin: const EdgeInsets.only(top: 2),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: overdue
+                                      ? scheme.error
+                                      : scheme.primary,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+          ],
+        ),
+      ),
+    ];
+    final wide = context.isWide;
     return Scaffold(
       appBar: AppBar(title: const Text('Calendar')),
       body: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 560),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    tooltip: 'Previous month',
-                    icon: const Icon(Icons.chevron_left),
-                    onPressed: () => _shift(-1),
-                  ),
-                  Text(
-                    DateFormat('MMMM y').format(_month),
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  IconButton(
-                    tooltip: 'Next month',
-                    icon: const Icon(Icons.chevron_right),
-                    onPressed: () => _shift(1),
-                  ),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Row(
+          constraints: BoxConstraints(maxWidth: wide ? 1100 : 560),
+          child: wide
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    for (final d in const ['M', 'T', 'W', 'T', 'F', 'S', 'S'])
-                      Expanded(
-                        child: Center(
-                          child: Text(
-                            d,
-                            style: Theme.of(context).textTheme.labelSmall,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              if (_loading) const LinearProgressIndicator(),
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: GridView.count(
-                  crossAxisCount: 7,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    for (var i = 0; i < offset; i++) const SizedBox.shrink(),
-                    for (var day = 1; day <= days; day++)
-                      Builder(
-                        builder: (context) {
-                          final date = DateTime(_month.year, _month.month, day);
-                          final ts = _on(date);
-                          final overdue = ts.any((t) => t.isOverdue);
-                          final sel =
-                              _selected != null &&
-                              DateUtils.isSameDay(_selected, date);
-                          return Semantics(
-                            label:
-                                '${DateFormat('MMMM d').format(date)}, ${ts.length} tasks due',
-                            button: true,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(12),
-                              onTap: () => setState(() => _selected = date),
-                              child: Container(
-                                margin: const EdgeInsets.all(2),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12),
-                                  color: sel
-                                      ? scheme.primary.withValues(alpha: 0.2)
-                                      : null,
-                                  border: DateUtils.isSameDay(date, today)
-                                      ? Border.all(color: scheme.primary)
-                                      : null,
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text('$day'),
-                                    if (ts.isNotEmpty)
-                                      Container(
-                                        width: 6,
-                                        height: 6,
-                                        margin: const EdgeInsets.only(top: 2),
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: overdue
-                                              ? scheme.error
-                                              : scheme.primary,
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: _error != null
-                    ? ErrorView(message: _error!, onRetry: _load)
-                    : dayTasks.isEmpty
-                    ? const Center(child: Text('No tasks due this day'))
-                    : ListView(
+                    SizedBox(width: 480, child: Column(children: calendar)),
+                    const VerticalDivider(width: 1),
+                    Expanded(
+                      child: Column(
                         children: [
-                          for (final t in dayTasks)
-                            ListTile(
-                              leading: Icon(
-                                t.isOverdue
-                                    ? Icons.warning_amber
-                                    : Icons.task_alt,
-                                color: t.isOverdue ? scheme.error : null,
+                          Padding(
+                            padding: const EdgeInsets.all(Space.lg),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                _selected == null
+                                    ? 'Select a day'
+                                    : DateFormat('EEEE, MMMM d')
+                                          .format(_selected!),
+                                style: Theme.of(context).textTheme.titleMedium,
                               ),
-                              title: Text(t.title),
-                              subtitle: Text(
-                                '${t.projectName ?? ''}${t.isOverdue ? ' · Overdue' : ''}',
-                              ),
-                              trailing: StatusChip(status: t.status),
-                              onTap: () async {
-                                await openTaskDetail(context, t, null);
-                                _load();
-                              },
                             ),
+                          ),
+                          Expanded(
+                            child: _error != null
+                                ? ErrorView(message: _error!, onRetry: _load)
+                                : dayTasks.isEmpty
+                                ? const Center(
+                                    child: Text('No tasks due this day'),
+                                  )
+                                : ListView(
+                                    children: [
+                                      for (final t in dayTasks)
+                                        ListTile(
+                                          leading: Icon(
+                                            t.isOverdue
+                                                ? Icons.warning_amber
+                                                : Icons.task_alt,
+                                            color: t.isOverdue
+                                                ? scheme.error
+                                                : null,
+                                          ),
+                                          title: Text(t.title),
+                                          subtitle: Text(
+                                            '${t.projectName ?? ''}${t.isOverdue ? ' · Overdue' : ''}',
+                                          ),
+                                          trailing: StatusChip(
+                                            status: t.status,
+                                          ),
+                                          onTap: () async {
+                                            await openTaskDetail(
+                                              context,
+                                              t,
+                                              null,
+                                            );
+                                            _load();
+                                          },
+                                        ),
+                                    ],
+                                  ),
+                          ),
                         ],
                       ),
-              ),
-            ],
-          ),
+                    ),
+                  ],
+                )
+              : Column(
+                  children: [
+                    ...calendar,
+                    const Divider(height: 1),
+                    Expanded(
+                      child: _error != null
+                          ? ErrorView(message: _error!, onRetry: _load)
+                          : dayTasks.isEmpty
+                          ? const Center(child: Text('No tasks due this day'))
+                          : ListView(
+                              children: [
+                                for (final t in dayTasks)
+                                  ListTile(
+                                    leading: Icon(
+                                      t.isOverdue
+                                          ? Icons.warning_amber
+                                          : Icons.task_alt,
+                                      color: t.isOverdue ? scheme.error : null,
+                                    ),
+                                    title: Text(t.title),
+                                    subtitle: Text(
+                                      '${t.projectName ?? ''}${t.isOverdue ? ' · Overdue' : ''}',
+                                    ),
+                                    trailing: StatusChip(status: t.status),
+                                    onTap: () async {
+                                      await openTaskDetail(context, t, null);
+                                      _load();
+                                    },
+                                  ),
+                              ],
+                            ),
+                    ),
+                  ],
+                ),
         ),
       ),
     );
