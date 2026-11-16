@@ -36,7 +36,11 @@ class ApiException implements Exception {
 ///
 /// Change [baseUrl] below as needed for the platform you're testing on.
 class ApiClient {
-  static const String baseUrl = 'http://127.0.0.1:8012/api';
+  /// Override at build time: `--dart-define=API_BASE_URL=https://api.example.com/api`.
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://127.0.0.1:8012/api',
+  );
 
   static const _tokenKey = 'tasknest_token';
 

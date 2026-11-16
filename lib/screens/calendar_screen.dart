@@ -202,8 +202,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             child: _error != null
                                 ? ErrorView(message: _error!, onRetry: _load)
                                 : dayTasks.isEmpty
-                                ? const Center(
-                                    child: Text('No tasks due this day'),
+                                ? const EmptyState(
+                                    message: 'No tasks due this day. Enjoy the free time!',
                                   )
                                 : ListView(
                                     children: [
