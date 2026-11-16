@@ -274,10 +274,12 @@ class _DashboardHeader extends StatelessWidget {
     final headerBg = isDark ? AppColors.surfaceDark : AppColors.navy;
     const headerFg = AppColors.cream;
     final roleLabel = _roleLabel();
+    final narrow = MediaQuery.sizeOf(context).width < 360;
+    final gap = narrow ? 6.0 : 10.0;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+      padding: EdgeInsets.fromLTRB(narrow ? 14 : 20, 20, narrow ? 14 : 20, 24),
       decoration: BoxDecoration(
         color: headerBg,
         borderRadius: const BorderRadius.only(
@@ -295,20 +297,18 @@ class _DashboardHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+          Wrap(
+            spacing: 12,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Expanded(
-                child: Text(
-                  firstName != null
-                      ? 'Welcome back, $firstName'
-                      : 'Welcome back',
-                  style: const TextStyle(
-                    color: headerFg,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.3,
-                  ),
+              Text(
+                firstName != null ? 'Welcome back, $firstName' : 'Welcome back',
+                style: const TextStyle(
+                  color: headerFg,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.3,
                 ),
               ),
               if (roleLabel.isNotEmpty)
@@ -348,7 +348,7 @@ class _DashboardHeader extends StatelessWidget {
             tintOpacity: 0.08,
             blurSigma: 14,
             borderRadius: BorderRadius.circular(18),
-            padding: const EdgeInsets.all(10),
+            padding: EdgeInsets.all(gap),
             border: Border.all(color: headerFg.withValues(alpha: 0.14)),
             child: Row(
               children: [
@@ -360,7 +360,7 @@ class _DashboardHeader extends StatelessWidget {
                     fg: headerFg,
                   ),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: gap),
                 Expanded(
                   child: _QuickStatCard(
                     icon: Icons.task_alt_outlined,
@@ -369,7 +369,7 @@ class _DashboardHeader extends StatelessWidget {
                     fg: headerFg,
                   ),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: gap),
                 Expanded(
                   child: _QuickStatCard(
                     icon: Icons.warning_amber_rounded,
@@ -413,7 +413,10 @@ class _QuickStatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final card = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+      padding: EdgeInsets.symmetric(
+        horizontal: 4,
+        vertical: MediaQuery.sizeOf(context).width < 360 ? 8 : 12,
+      ),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: highlighted ? 0.10 : 0.07),
         borderRadius: BorderRadius.circular(14),
@@ -435,12 +438,15 @@ class _QuickStatCard extends StatelessWidget {
             child: Icon(icon, size: 18, color: fg.withValues(alpha: 0.9)),
           ),
           const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              color: fg,
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: TextStyle(
+                color: fg,
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
           const SizedBox(height: 2),
