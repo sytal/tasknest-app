@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:tasknest_app/core/theme/brand_colors.dart';
@@ -11,10 +12,24 @@ import 'package:tasknest_app/theme/app_theme.dart';
 
 Widget _host(Widget child, {Size size = const Size(400, 800)}) => MediaQuery(
   data: MediaQueryData(size: size),
-  child: MaterialApp(theme: AppTheme.light(), home: Scaffold(body: child)),
+  child: MaterialApp(
+    theme: AppTheme.light(),
+    home: Scaffold(body: child),
+  ),
 );
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(() async {
+    GoogleFonts.config.allowRuntimeFetching = false;
+    await GoogleFonts.pendingFonts([
+      for (final w in FontWeight.values.where(
+        (w) => w.value >= 400 && w.value <= 800,
+      ))
+        GoogleFonts.poppins(fontWeight: w),
+    ]);
+  });
+
   testWidgets('AppButton is disabled while loading', (t) async {
     var taps = 0;
     await t.pumpWidget(
@@ -23,6 +38,11 @@ void main() {
     await t.tap(find.byType(FilledButton));
     expect(taps, 0);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    // Stop the spinner before the test ends (fonts finish loading meanwhile).
+    await t.pumpWidget(
+      _host(AppButton(label: 'Go', loading: false, onPressed: () => taps++)),
+    );
+    await t.pump(const Duration(seconds: 1));
   });
 
   testWidgets('showConfirmDialog returns true on confirm', (t) async {
